@@ -20,12 +20,14 @@ public class TestPublisher extends Publisher {
 
 	@Override
     public void run() {
+		
+		Sample s = null;
     	
         while (true) {
         	
         	long millis = System.currentTimeMillis();
         	
-            Sample s = new Sample(deviceID, sessionID, millis, (float) Math.sin((double) millis / 1000));
+            s = new Sample(s, deviceID, sessionID, millis, (float) Math.sin((double) millis / 1000));
             String jsonSample = gson.toJson(s);
             AWSIotMessage message = new NonBlockingPublishListener(topic, qos, jsonSample);
             

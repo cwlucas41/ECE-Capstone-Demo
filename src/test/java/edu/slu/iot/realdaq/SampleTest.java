@@ -12,9 +12,11 @@ public class SampleTest {
 
 	@Test
 	public void testSorting() {
+		Sample sample = null;
 		List<Sample> l = new ArrayList<Sample>();
 		for (int i = 0; i < 100; i++) {
-			l.add(new Sample("", "", i, 0));
+			sample = new Sample(sample, "", "", System.currentTimeMillis(), 0);
+			l.add(sample);
 		}
 		
 		Collections.shuffle(l);
@@ -22,7 +24,7 @@ public class SampleTest {
 		
 		int i = 0;
 		for (Sample s : l) {
-			assertEquals(s.getTimestamp(), i);
+			assertEquals(s.getSequenceNumber(), i);
 			i++;
 		}
 	}
