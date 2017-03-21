@@ -29,6 +29,7 @@ public class DaqPublisher extends Publisher {
     try (
     		Scanner sc = new Scanner(file);
     ) {
+      Sample s = null;
       while(true){
         if(sc.hasNextLine()){
           String value = sc.nextLine();
@@ -45,7 +46,7 @@ public class DaqPublisher extends Publisher {
             // DO NOTHING 
           }
           
-          Sample s = new Sample(deviceID, sessionID, millis, parsedValue);
+          s = new Sample(s, deviceID, sessionID, millis, parsedValue);
           String jsonSample = gson.toJson(s);
           AWSIotMessage message = new NonBlockingPublishListener(topic, qos, jsonSample);
 
