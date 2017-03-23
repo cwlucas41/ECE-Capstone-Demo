@@ -41,6 +41,7 @@ public class StrandListener extends AWSIotTopic {
     	Sample sample = gson.fromJson(message.getStringPayload(), Sample.class); 	
         System.out.println(System.currentTimeMillis() + ": <<< " + sample.toString());
         sw.writeLineToList(sample.toString());
+        sw.addSample(sample);
     }
 
 }

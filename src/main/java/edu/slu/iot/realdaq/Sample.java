@@ -1,7 +1,7 @@
 package edu.slu.iot.realdaq;
 
 public class Sample implements Comparable<Sample> {
-	
+	//TODO: sequence number
 	private String deviceID;
 	private String sessionID;
 	private long timestamp;

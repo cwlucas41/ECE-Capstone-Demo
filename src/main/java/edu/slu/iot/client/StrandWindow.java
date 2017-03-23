@@ -10,10 +10,13 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import edu.slu.iot.IoTClient;
 import edu.slu.iot.client.Strand;
+import edu.slu.iot.realdaq.Sample;
 
 import javax.swing.JFileChooser;
 import javax.swing.JTextField;
@@ -26,6 +29,20 @@ import javax.swing.table.DefaultTableModel;
 import com.amazonaws.services.iot.client.AWSIotException;
 import com.amazonaws.services.iot.client.AWSIotQos;
 import com.amazonaws.services.iot.client.AWSIotTimeoutException;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
+import com.amazonaws.services.dynamodbv2.document.DynamoDB;
+import com.amazonaws.services.dynamodbv2.document.Item;
+import com.amazonaws.services.dynamodbv2.document.ItemCollection;
+import com.amazonaws.services.dynamodbv2.document.QueryOutcome;
+import com.amazonaws.services.dynamodbv2.document.Table;
+import com.amazonaws.services.dynamodbv2.document.spec.QuerySpec;
+import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.profile.ProfileCredentialsProvider;
+import com.amazonaws.client.builder.AwsClientBuilder;
+import com.amazonaws.regions.Regions;
 
 import javax.swing.JScrollPane;
 import java.awt.SystemColor;
@@ -35,12 +52,17 @@ import javax.swing.AbstractListModel;
 public class StrandWindow {
 
 	private Strand currentStrand;
-	private JFrame frame;
-	private JTextField topicField;
 	private File configFile = null;
 	private IoTClient iotClient;
-	private JButton connectButton;
 	private AppendableView listModel = new AppendableView();
+	private Set<Sample> sampleSet;
+	
+	private JFrame frame;
+	private JTextField topicField;
+	private JButton connectButton;
+	private JTextPane connectionStatus;
+	
+	static private AmazonDynamoDB dynamoDB;
 
 	/**
 	 * Launch the application.
@@ -111,8 +133,55 @@ public class StrandWindow {
 		
 		frame.getContentPane().add(connectButton, "cell 2 0,alignx center,growy");
 		
-		JButton btnStream = new JButton("Stream");
-		frame.getContentPane().add(btnStream, "cell 3 0 1 2,alignx center,aligny top");
+		JButton btnHist = new JButton("Add past data");
+		frame.getContentPane().add(btnHist, "cell 3 0 1 2,alignx center,aligny top");
+		btnHist.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				/* Deprecated as of QOS0 change commits
+				Iterator<Sample> sampleIter = sampleSet.iterator(); //naive approach without sequence numbers
+				if (sampleIter.hasNext()) {
+					Sample firstSample = sampleIter.next();
+					long firstTime = firstSample.getTimestamp();
+					try {Thread.sleep(100);} catch (InterruptedException e) {}
+					Iterator<Sample> secSampleIter = sampleSet.iterator();
+					if (secSampleIter.next().getTimestamp() < firstTime) {
+						firstTime = secSampleIter.next().getTimestamp();
+					}
+					
+					dynamoDB = new DynamoDB(new AmazonDynamoDBClient(new ProfileCredentialsProvider("DDBCert1/conf.txt", "default")));
+					Table table = dynamoDB.getTable("tableName"); //read name from secondary config file
+					
+			        Item item = table.getItem("Timestamp", // attribute name
+			                firstTime, // attribute value
+			                "DeviceID, SessionID, Timestamp, Voltage", // projection expression
+			                null); // name map - don't know what this is
+				}*/
+				
+				Iterator<Sample> sampleIter = sampleSet.iterator();
+				if (sampleIter.hasNext()) { //if we have any data from this session so far, only query data from before it began
+					
+				} else { // We have nothing so far (session is currently not active), ask for everything
+					//AwsClientBuilder builder = new AwsClientBuilder().withCredentials(new ProfileCredentialsProvider("DDBCert1/conf.txt", "default"));
+					dynamoDB = AmazonDynamoDBClientBuilder.standard()
+	                        .withRegion(Regions.US_WEST_2)
+	                        .withCredentials(new ProfileCredentialsProvider("DDBCert1/conf.txt", "default"))
+	                        .build();
+					Table table = new Table(dynamoDB, "tableName");//((AmazonDynamoDBClient) dynamoDB).describeTable("tableName"); //must know the table name ahead of time and hardcode OR store in a config file
+					QuerySpec spec = new QuerySpec()
+					    .withKeyConditionExpression("Id = :v_id")
+					    .withValueMap(new ValueMap()
+					        .withString(":v_id", "Amazon DynamoDB#DynamoDB Thread 1"));
+					ItemCollection<QueryOutcome> items = table.query(spec);
+					Iterator<Item> iterator = items.iterator();
+					Item item = null;
+					while (iterator.hasNext()) {
+					    item = iterator.next();
+					    System.out.println(item.toJSONPretty());
+					}
+				}
+				
+			}
+		});
 		
 		JTextPane txtpnEnterTheTopic = new JTextPane();
 		txtpnEnterTheTopic.setBackground(SystemColor.control);
@@ -120,10 +189,10 @@ public class StrandWindow {
 		frame.getContentPane().add(txtpnEnterTheTopic, "cell 0 1,alignx left,aligny top");
 		
 		
-		JTextPane txtpnStatusNotConnected = new JTextPane();
-		txtpnStatusNotConnected.setBackground(SystemColor.control);
-		txtpnStatusNotConnected.setText("Status: Not Connected");
-		frame.getContentPane().add(txtpnStatusNotConnected, "cell 2 1,alignx center,aligny top");
+		connectionStatus = new JTextPane();
+		connectionStatus.setBackground(SystemColor.control);
+		connectionStatus.setText("Status: Not Connected");
+		frame.getContentPane().add(connectionStatus, "cell 2 1,alignx center,aligny top");
 		
 		JScrollPane scrollPane = new JScrollPane();
 		frame.getContentPane().add(scrollPane, "cell 0 2 4 1,grow");
@@ -139,7 +208,8 @@ public class StrandWindow {
 					try {
 						//currentStrand =  new Strand(topicField.getText(), configFile);
 						iotClient = new IoTClient(configFile.getPath());
-				        iotClient.subscribe(new StrandListener(topicField.getText(), AWSIotQos.QOS1, StrandWindow.this));
+				        iotClient.subscribe(new StrandListener(topicField.getText(), AWSIotQos.QOS0, StrandWindow.this));
+				        connectionStatus.setText("Status: Connected"); //TODO: update this value appropriately
 					} catch (AWSIotException e) {
 						e.printStackTrace();
 					}
@@ -149,7 +219,10 @@ public class StrandWindow {
 	
 	public void writeLineToList(String lineToWrite) {
 		listModel.addToList(lineToWrite);
-		
+	}
+	
+	public void addSample(Sample sample) {
+		sampleSet.add(sample);
 	}
 	
 	public class AppendableView extends AbstractListModel<String> {
