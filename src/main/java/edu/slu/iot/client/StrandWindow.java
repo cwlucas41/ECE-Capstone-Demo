@@ -10,6 +10,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -36,6 +37,7 @@ import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.document.ItemCollection;
 import com.amazonaws.services.dynamodbv2.document.QueryOutcome;
+import com.amazonaws.services.dynamodbv2.document.RangeKeyCondition;
 import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.document.spec.QuerySpec;
 import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
@@ -55,7 +57,7 @@ public class StrandWindow {
 	private File configFile = null;
 	private IoTClient iotClient;
 	private AppendableView listModel = new AppendableView();
-	private Set<Sample> sampleSet;
+	private Set<Sample> sampleSet = new HashSet<Sample>();
 	
 	private JFrame frame;
 	private JTextField topicField;
@@ -157,29 +159,31 @@ public class StrandWindow {
 			                null); // name map - don't know what this is
 				}*/
 				
+				long startTime = 0;
+				QuerySpec spec;
 				Iterator<Sample> sampleIter = sampleSet.iterator();
 				if (sampleIter.hasNext()) { //if we have any data from this session so far, only query data from before it began
-					
-				} else { // We have nothing so far (session is currently not active), ask for everything
-					//AwsClientBuilder builder = new AwsClientBuilder().withCredentials(new ProfileCredentialsProvider("DDBCert1/conf.txt", "default"));
-					dynamoDB = AmazonDynamoDBClientBuilder.standard()
-	                        .withRegion(Regions.US_WEST_2)
-	                        .withCredentials(new ProfileCredentialsProvider("DDBCert1/conf.txt", "default"))
-	                        .build();
-					Table table = new Table(dynamoDB, "tableName");//((AmazonDynamoDBClient) dynamoDB).describeTable("tableName"); //must know the table name ahead of time and hardcode OR store in a config file
-					QuerySpec spec = new QuerySpec()
-					    .withKeyConditionExpression("Id = :v_id")
-					    .withValueMap(new ValueMap()
-					        .withString(":v_id", "Amazon DynamoDB#DynamoDB Thread 1"));
-					ItemCollection<QueryOutcome> items = table.query(spec);
-					Iterator<Item> iterator = items.iterator();
-					Item item = null;
-					while (iterator.hasNext()) {
-					    item = iterator.next();
-					    System.out.println(item.toJSONPretty());
-					}
+					startTime = sampleIter.next().getTimestamp();
+					spec = new QuerySpec()
+						.withRangeKeyCondition(new RangeKeyCondition("time").lt(startTime))
+						.withHashKey("session", topicField.getText());
+				} else {
+					spec = new QuerySpec()
+						.withRangeKeyCondition(new RangeKeyCondition("timestamp").gt(startTime))
+						.withHashKey("sessionID", topicField.getText());
 				}
-				
+				dynamoDB = AmazonDynamoDBClientBuilder.standard()
+						.withRegion(Regions.US_WEST_2)
+						.withCredentials(new ProfileCredentialsProvider("DDBCert1/conf.txt", "default"))
+						.build();
+				Table table = new Table(dynamoDB, iotClient.getTableName()); //must know the table name ahead of time and hard-code OR store in a config file
+				ItemCollection<QueryOutcome> items = table.query(spec);
+				Iterator<Item> iterator = items.iterator();
+				Item item = null;
+				while (iterator.hasNext()) { //make sure this doesn't interrupt rendering (runs in its own thread)
+				    item = iterator.next();
+				    System.out.println(item.toJSONPretty());
+				}
 			}
 		});
 		
