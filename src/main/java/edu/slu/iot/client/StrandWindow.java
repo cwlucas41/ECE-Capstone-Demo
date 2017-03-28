@@ -8,7 +8,12 @@ import javax.swing.UIManager;
 import javax.swing.JButton;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -24,37 +29,31 @@ import javax.swing.JTextField;
 import net.miginfocom.swing.MigLayout;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableModel;
 
 import com.amazonaws.services.iot.client.AWSIotException;
 import com.amazonaws.services.iot.client.AWSIotQos;
-import com.amazonaws.services.iot.client.AWSIotTimeoutException;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
-import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.document.ItemCollection;
 import com.amazonaws.services.dynamodbv2.document.QueryOutcome;
 import com.amazonaws.services.dynamodbv2.document.RangeKeyCondition;
 import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.document.spec.QuerySpec;
-import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
-import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
-import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.regions.Regions;
 
 import javax.swing.JScrollPane;
 import java.awt.SystemColor;
 import javax.swing.JList;
 import javax.swing.AbstractListModel;
+import javax.swing.JSeparator;
 
 public class StrandWindow {
 
 	private Strand currentStrand;
 	private File configFile = null;
+	private File writeFile = null;
 	private IoTClient iotClient;
 	private AppendableView listModel = new AppendableView();
 	private Set<Sample> sampleSet = new HashSet<Sample>();
@@ -104,61 +103,17 @@ public class StrandWindow {
 		frame = new JFrame();
 		frame.setBounds(100, 100, 525, 300);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.getContentPane().setLayout(new MigLayout("", "[157.00px,grow][91px][][grow]", "[25.00px][17.00px,grow][grow]"));
+		frame.getContentPane().setLayout(new MigLayout("", "[157.00px,grow][91px][grow][grow]", "[25.00px][][56.00px,grow][][53.00,grow][grow]"));
 		
 		JTextPane txtpnChooseAConfiguration = new JTextPane();
 		txtpnChooseAConfiguration.setBackground(SystemColor.control);
 		txtpnChooseAConfiguration.setText("Choose a configuration file (.conf)");
-		frame.getContentPane().add(txtpnChooseAConfiguration, "cell 0 0,alignx left,aligny top");
-		
-		JButton btnBrowse = new JButton("Browse...");
-		btnBrowse.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent arg0) {
-				JFileChooser configFileChooser = new JFileChooser();
-				File workingDirectory = new File(System.getProperty("user.dir"));
-				configFileChooser.setCurrentDirectory(workingDirectory);
-				frame.getContentPane().add(configFileChooser);
-				int chooseStatus = configFileChooser.showOpenDialog(frame);
-				if (chooseStatus == JFileChooser.APPROVE_OPTION) {
-                    configFile = configFileChooser.getSelectedFile();
-				}
-			}
-		});
-		frame.getContentPane().add(btnBrowse, "cell 1 0,alignx center,growy");
-		
-		topicField = new JTextField();
-		frame.getContentPane().add(topicField, "cell 1 1,alignx center,aligny top");
-		topicField.setColumns(10);
-		
-		connectButton = new JButton("Connect to topic");
-		
-		frame.getContentPane().add(connectButton, "cell 2 0,alignx center,growy");
+		frame.getContentPane().add(txtpnChooseAConfiguration, "cell 0 0,alignx left,aligny center");
 		
 		JButton btnHist = new JButton("Add past data");
-		frame.getContentPane().add(btnHist, "cell 3 0 1 2,alignx center,aligny top");
+		frame.getContentPane().add(btnHist, "cell 3 2,alignx center,growy");
 		btnHist.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				/* Deprecated as of QOS0 change commits
-				Iterator<Sample> sampleIter = sampleSet.iterator(); //naive approach without sequence numbers
-				if (sampleIter.hasNext()) {
-					Sample firstSample = sampleIter.next();
-					long firstTime = firstSample.getTimestamp();
-					try {Thread.sleep(100);} catch (InterruptedException e) {}
-					Iterator<Sample> secSampleIter = sampleSet.iterator();
-					if (secSampleIter.next().getTimestamp() < firstTime) {
-						firstTime = secSampleIter.next().getTimestamp();
-					}
-					
-					dynamoDB = new DynamoDB(new AmazonDynamoDBClient(new ProfileCredentialsProvider("DDBCert1/conf.txt", "default")));
-					Table table = dynamoDB.getTable("tableName"); //read name from secondary config file
-					
-			        Item item = table.getItem("Timestamp", // attribute name
-			                firstTime, // attribute value
-			                "DeviceID, SessionID, Timestamp, Voltage", // projection expression
-			                null); // name map - don't know what this is
-				}*/
-				
+			public void actionPerformed(ActionEvent arg0) {				
 				long startTime = 0;
 				QuerySpec spec;
 				Iterator<Sample> sampleIter = sampleSet.iterator();
@@ -166,7 +121,7 @@ public class StrandWindow {
 					startTime = sampleIter.next().getTimestamp();
 					spec = new QuerySpec()
 						.withRangeKeyCondition(new RangeKeyCondition("time").lt(startTime))
-						.withHashKey("session", topicField.getText());
+						.withHashKey("sessionID", topicField.getText());
 				} else {
 					spec = new QuerySpec()
 						.withRangeKeyCondition(new RangeKeyCondition("timestamp").gt(startTime))
@@ -186,20 +141,106 @@ public class StrandWindow {
 				}
 			}
 		});
+		btnHist.setEnabled(false);
 		
-		JTextPane txtpnEnterTheTopic = new JTextPane();
-		txtpnEnterTheTopic.setBackground(SystemColor.control);
-		txtpnEnterTheTopic.setText("Enter the topic name");
-		frame.getContentPane().add(txtpnEnterTheTopic, "cell 0 1,alignx left,aligny top");
+		JButton btnBrowse = new JButton("Browse...");
+		btnBrowse.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent arg0) {
+				JFileChooser configFileChooser = new JFileChooser();
+				File workingDirectory = new File(System.getProperty("user.dir"));
+				configFileChooser.setCurrentDirectory(workingDirectory);
+				frame.getContentPane().add(configFileChooser);
+				int chooseStatus = configFileChooser.showOpenDialog(frame);
+				if (chooseStatus == JFileChooser.APPROVE_OPTION) {
+                    configFile = configFileChooser.getSelectedFile();
+                    connectButton.setEnabled(true);
+                    btnHist.setEnabled(true);
+				}
+			}
+		});
+		frame.getContentPane().add(btnBrowse, "cell 1 0,alignx center,growy");
 		
 		
 		connectionStatus = new JTextPane();
 		connectionStatus.setBackground(SystemColor.control);
 		connectionStatus.setText("Status: Not Connected");
-		frame.getContentPane().add(connectionStatus, "cell 2 1,alignx center,aligny top");
+		frame.getContentPane().add(connectionStatus, "cell 2 0,alignx center,aligny center");
+		
+		JSeparator firstSeparator = new JSeparator();
+		frame.getContentPane().add(firstSeparator, "cell 0 1 4 1,grow");
+		
+		topicField = new JTextField();
+		frame.getContentPane().add(topicField, "cell 1 2,alignx center,aligny center");
+		topicField.setColumns(10);
+		
+		JTextPane txtpnEnterTheTopic = new JTextPane();
+		txtpnEnterTheTopic.setBackground(SystemColor.control);
+		txtpnEnterTheTopic.setText("Enter the topic name");
+		frame.getContentPane().add(txtpnEnterTheTopic, "cell 0 2,alignx left,aligny center");
+		
+		connectButton = new JButton("Connect to topic");
+		connectButton.setEnabled(false);
+		
+		frame.getContentPane().add(connectButton, "cell 2 2,alignx center,growy");
+		
+		JSeparator secondSeparator = new JSeparator();
+		frame.getContentPane().add(secondSeparator, "cell 0 3 4 1,grow");
+		
+		JTextPane txtpnChooseAFile = new JTextPane();
+		txtpnChooseAFile.setText("Choose or create a file to write to");
+		txtpnChooseAFile.setBackground(SystemColor.menu);
+		frame.getContentPane().add(txtpnChooseAFile, "cell 0 4,growx,aligny center");
+		JButton writeButton = new JButton("Write to file");
+		writeButton.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent arg0) {
+				if (writeFile != null) {
+					File target = new File(writeFile.getPath());
+					FileOutputStream fstream = null;
+					try {fstream = new FileOutputStream(target);}
+					catch (FileNotFoundException fnfe) {
+						System.out.println("File not found exception in file write");
+					}
+					BufferedWriter bwriter = new BufferedWriter(new OutputStreamWriter(fstream));
+					try {
+						Iterator<Sample> iterator = sampleSet.iterator();
+						Sample sample = null;
+						while (iterator.hasNext()) {
+							sample = iterator.next();
+							bwriter.write(sample.toString());
+							bwriter.newLine();
+						}
+						bwriter.close();
+					}
+					catch (IOException ioe) {
+						System.out.println("IOException on file write");
+					}
+				}
+			}
+		});
+		writeButton.setEnabled(false);
+		frame.getContentPane().add(writeButton, "cell 2 4,alignx center,growy");
+		
+		JButton writePathButton = new JButton("Find folder...");
+		writePathButton.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent arg0) {
+				JFileChooser writingFileChooser = new JFileChooser();
+				File workingDirectory = new File(System.getProperty("user.dir"));
+				writingFileChooser.setCurrentDirectory(workingDirectory);
+				frame.getContentPane().add(writingFileChooser);
+				int chooseStatus = writingFileChooser.showOpenDialog(frame);
+				if (chooseStatus == JFileChooser.APPROVE_OPTION) {
+                    writeFile = writingFileChooser.getSelectedFile();
+                    writeButton.setEnabled(true);
+				}
+			}
+		});
+		frame.getContentPane().add(writePathButton, "cell 1 4,alignx center,growy");
 		
 		JScrollPane scrollPane = new JScrollPane();
-		frame.getContentPane().add(scrollPane, "cell 0 2 4 1,grow");
+		frame.getContentPane().add(scrollPane, "cell 0 5 4 1,grow");
 		
 		JList list = new JList(listModel);
 		scrollPane.setViewportView(list);
