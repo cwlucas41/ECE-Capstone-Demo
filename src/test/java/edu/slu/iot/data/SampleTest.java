@@ -1,4 +1,4 @@
-package edu.slu.iot.realdaq;
+package edu.slu.iot.data;
 
 import static org.junit.Assert.*;
 
@@ -7,6 +7,8 @@ import java.util.Collections;
 import java.util.List;
 
 import org.junit.Test;
+
+import edu.slu.iot.data.Sample;
 
 public class SampleTest {
 
