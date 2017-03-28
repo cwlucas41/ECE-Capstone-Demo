@@ -12,6 +12,6 @@ public class SubscribeSample {
     	
 		IoTClient client = new IoTClient("Certificate1/conf.txt");
     	
-		client.subscribe(new TestTopicListener("test", AWSIotQos.QOS1));
+		client.subscribe(new TestTopicListener("test", AWSIotQos.QOS0));
     }
 }

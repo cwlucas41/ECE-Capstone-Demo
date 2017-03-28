@@ -39,7 +39,7 @@ public class DaqPublisher extends Publisher {
           long millis = Long.parseLong(params[1]); 
           
           try{
-            Thread.sleep(50);
+            Thread.sleep(1000);
           }
           catch(InterruptedException e){
             // DO NOTHING 
@@ -89,5 +89,3 @@ public class DaqPublisher extends Publisher {
 
   }
 }
-
-
