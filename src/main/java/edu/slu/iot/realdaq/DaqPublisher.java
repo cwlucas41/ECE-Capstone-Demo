@@ -2,7 +2,6 @@ package edu.slu.iot.realdaq;
 
 import com.amazonaws.services.iot.client.AWSIotMessage;
 import com.amazonaws.services.iot.client.AWSIotQos;
-import com.google.gson.Gson;
 
 import java.io.File;
 import java.io.FileNotFoundException;
