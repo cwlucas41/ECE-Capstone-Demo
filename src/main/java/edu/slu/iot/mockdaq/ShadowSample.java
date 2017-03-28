@@ -4,7 +4,6 @@ import com.amazonaws.services.iot.client.AWSIotQos;
 import com.amazonaws.services.iot.client.AWSIotTimeoutException;
 
 import edu.slu.iot.IoTClient;
-import edu.slu.iot.mockdaq.TestPublisher;
 
 public class ShadowSample {
 	

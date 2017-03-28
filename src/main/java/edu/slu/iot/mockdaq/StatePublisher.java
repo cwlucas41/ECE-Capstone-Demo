@@ -2,7 +2,6 @@ package edu.slu.iot.mockdaq;
 
 import com.amazonaws.services.iot.client.AWSIotMessage;
 import com.amazonaws.services.iot.client.AWSIotQos;
-import com.google.gson.Gson;
 
 import edu.slu.iot.Publisher;
 import edu.slu.iot.data.GsonSerializer;
