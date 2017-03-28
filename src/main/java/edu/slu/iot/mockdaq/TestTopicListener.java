@@ -19,7 +19,8 @@ import com.amazonaws.services.iot.client.AWSIotQos;
 import com.amazonaws.services.iot.client.AWSIotTopic;
 import com.google.gson.Gson;
 
-import edu.slu.iot.realdaq.Sample;
+import edu.slu.iot.data.GsonSerializer;
+import edu.slu.iot.data.Sample;
 
 /**
  * This class extends {@link AWSIotTopic} to receive messages from a subscribed
@@ -27,15 +28,13 @@ import edu.slu.iot.realdaq.Sample;
  */
 public class TestTopicListener extends AWSIotTopic {
 	
-	private static final Gson gson = new Gson();
-
     public TestTopicListener(String topic, AWSIotQos qos) {
         super(topic, qos);
     }
 
     @Override
     public void onMessage(AWSIotMessage message) {
-    	Sample sample = gson.fromJson(message.getStringPayload(), Sample.class);
+    	Sample sample = GsonSerializer.deserialize(message.getStringPayload(), Sample.class);
         System.out.println(System.currentTimeMillis() + ": <<< " + sample.toString());
     }
 
