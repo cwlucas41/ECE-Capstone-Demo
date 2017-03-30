@@ -130,14 +130,17 @@ public class StrandWindow {
 						.withRegion(Regions.US_WEST_2)
 						.withCredentials(new ProfileCredentialsProvider("DDBCert1/conf.txt", "default"))
 						.build();
-				Table table = new Table(dynamoDB, iotClient.getTableName()); //must know the table name ahead of time and hard-code OR store in a config file
+				Table table = new Table(dynamoDB, iotClient.getTableName()); //TODO: have this available even if you are not connected to a topic
 				ItemCollection<QueryOutcome> items = table.query(spec);
 				Iterator<Item> iterator = items.iterator();
 				Item item = null;
-				while (iterator.hasNext()) { //make sure this doesn't interrupt rendering (runs in its own thread)
+				List<Sample> writeToView = new ArrayList<Sample>();
+				while (iterator.hasNext()) { //make sure this doesn't interrupt rendering too much
 				    item = iterator.next();
+				    writeToView.add(new Sample(item));
 				    System.out.println(item.toJSONPretty());
 				}
+				listModel.addBulkToList(writeToView);
 			}
 		});
 		btnHist.setEnabled(false);

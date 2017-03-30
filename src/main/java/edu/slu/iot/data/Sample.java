@@ -1,22 +1,24 @@
 package edu.slu.iot.data;
+import com.amazonaws.services.dynamodbv2.document.Item;
 
 public class Sample implements Comparable<Sample> {
-	//TODO: sequence number
-	private String deviceID;
 	private String sessionID;
 	private long timestamp;
 	private float value;
 	
 	public Sample(String deviceID, String sessionID, long timestamp, float value) {
-		this.deviceID = deviceID;
 		this.sessionID = sessionID;
 		this.timestamp = timestamp;
 		this.value = value;
 	}
 	
-	public String getDeviceID() {
-		return deviceID;
+	// construct from dynamoDB Item object; used for database query conversion
+	public Sample(Item item) {
+		this.sessionID = item.getString("sessionID");
+		this.timestamp = item.getLong("timestamp");
+		this.value = item.getFloat("value");
 	}
+
 	public String getSessionID() {
 		return sessionID;
 	}
@@ -35,6 +37,6 @@ public class Sample implements Comparable<Sample> {
 
 	@Override
 	public String toString() {
-		return "deviceID: " + deviceID + ", sessionID: " + sessionID + ", timestamp: " + timestamp + " value: " + value;
+		return "sessionID: " + sessionID + ", timestamp: " + timestamp + " value: " + value;
 	}
 }
