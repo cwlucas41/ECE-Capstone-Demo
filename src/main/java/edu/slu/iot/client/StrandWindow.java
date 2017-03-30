@@ -15,6 +15,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -56,7 +57,6 @@ public class StrandWindow {
 	private File writeFile = null;
 	private IoTClient iotClient;
 	private AppendableView listModel = new AppendableView();
-	private Set<Sample> sampleSet = new HashSet<Sample>();
 	
 	private JFrame frame;
 	private JTextField topicField;
@@ -116,9 +116,8 @@ public class StrandWindow {
 			public void actionPerformed(ActionEvent arg0) {				
 				long startTime = 0;
 				QuerySpec spec;
-				Iterator<Sample> sampleIter = sampleSet.iterator();
-				if (sampleIter.hasNext()) { //if we have any data from this session so far, only query data from before it began
-					startTime = sampleIter.next().getTimestamp();
+				if (listModel.getSize() != 0) { //if we have any data from this session so far, only query data from before it began
+					startTime = listModel.getElementAt(0).getTimestamp();
 					spec = new QuerySpec()
 						.withRangeKeyCondition(new RangeKeyCondition("time").lt(startTime))
 						.withHashKey("sessionID", topicField.getText());
@@ -204,10 +203,9 @@ public class StrandWindow {
 					}
 					BufferedWriter bwriter = new BufferedWriter(new OutputStreamWriter(fstream));
 					try {
-						Iterator<Sample> iterator = sampleSet.iterator();
 						Sample sample = null;
-						while (iterator.hasNext()) {
-							sample = iterator.next();
+						for (int i = 0; i < listModel.getSize(); i++) {
+							sample = listModel.getElementAt(i);
 							bwriter.write(sample.toString());
 							bwriter.newLine();
 						}
@@ -262,30 +260,34 @@ public class StrandWindow {
 		});
 	}
 	
-	public void writeLineToList(String lineToWrite) {
-		listModel.addToList(lineToWrite);
+	public void writeLineToList(Sample sampleToWrite) {
+		listModel.appendToList(sampleToWrite);
 	}
 	
-	public void addSample(Sample sample) {
-		sampleSet.add(sample);
-	}
-	
-	public class AppendableView extends AbstractListModel<String> {
-		private List<String> model;
+	public class AppendableView extends AbstractListModel<Sample> {
+		private List<Sample> model;
 		
 		public AppendableView() {
-			model = new ArrayList<String>();
+			model = new ArrayList<Sample>();
 		}
 		
 		public int getSize() {
 			return model.size();
 		}
-		public String getElementAt(int index) {
+		public Sample getElementAt(int index) {
 			return model.get(index);
 		}
-		public void addToList(String value) {
+		public void appendToList(Sample value) {
 			model.add(value);
 			fireIntervalAdded(this, this.getSize() - 1, this.getSize() - 1);
+		}
+		public void addBulkToList(List<Sample> listOfValues) {
+			model.addAll(listOfValues);
+			Collections.sort(model);
+			fireIntervalAdded(this, 0, this.getSize() - 1);
+		}
+		public List<Sample> getList() {
+			return model;
 		}
 	}
 

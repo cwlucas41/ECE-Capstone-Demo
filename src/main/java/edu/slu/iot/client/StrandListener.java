@@ -40,8 +40,7 @@ public class StrandListener extends AWSIotTopic {
     public void onMessage(AWSIotMessage message) {
     	Sample sample = gson.fromJson(message.getStringPayload(), Sample.class); 	
         System.out.println(System.currentTimeMillis() + ": <<< " + sample.toString());
-        sw.writeLineToList(sample.toString());
-        sw.addSample(sample);
+        sw.writeLineToList(sample);
     }
 
 }
