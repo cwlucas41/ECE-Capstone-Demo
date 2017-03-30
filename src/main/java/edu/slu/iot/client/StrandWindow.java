@@ -23,7 +23,7 @@ import java.util.Set;
 
 import edu.slu.iot.IoTClient;
 import edu.slu.iot.client.Strand;
-import edu.slu.iot.realdaq.Sample;
+import edu.slu.iot.data.Sample;
 
 import javax.swing.JFileChooser;
 import javax.swing.JTextField;

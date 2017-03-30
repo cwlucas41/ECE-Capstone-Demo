@@ -1,4 +1,4 @@
-package edu.slu.iot.realdaq;
+package edu.slu.iot.data;
 
 public class Sample implements Comparable<Sample> {
 	//TODO: sequence number

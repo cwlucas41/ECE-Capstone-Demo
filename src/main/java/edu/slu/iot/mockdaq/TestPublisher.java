@@ -1,17 +1,17 @@
+
 package edu.slu.iot.mockdaq;
 
 import com.amazonaws.services.iot.client.AWSIotMessage;
 import com.amazonaws.services.iot.client.AWSIotQos;
-import com.google.gson.Gson;
 
 import edu.slu.iot.Publisher;
-import edu.slu.iot.realdaq.Sample;
+import edu.slu.iot.data.GsonSerializer;
+import edu.slu.iot.data.Sample;
 
 public class TestPublisher extends Publisher {
 	
 	private String sessionID;
 	private String deviceID = "defaultDeviceID";
-	private static final Gson gson = new Gson();
 	
 	public TestPublisher(String topic, AWSIotQos qos, String sessionID) {
 		super(topic, qos);
@@ -26,7 +26,7 @@ public class TestPublisher extends Publisher {
         	long millis = System.currentTimeMillis();
         	
             Sample s = new Sample(deviceID, sessionID, millis, (float) Math.sin((double) millis / 1000));
-            String jsonSample = gson.toJson(s);
+            String jsonSample = GsonSerializer.serialize(s);
             AWSIotMessage message = new NonBlockingPublishListener(topic, qos, jsonSample);
             
             publish(message);
@@ -46,7 +46,7 @@ public class TestPublisher extends Publisher {
 
 	    public NonBlockingPublishListener(String topic, AWSIotQos qos, String payload) {
 	        super(topic, qos, payload);
-	        sample = gson.fromJson(getStringPayload(), Sample.class);
+	        sample = GsonSerializer.deserialize(getStringPayload(), Sample.class);
 	    }
 
 	    @Override
