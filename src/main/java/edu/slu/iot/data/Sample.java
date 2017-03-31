@@ -37,6 +37,6 @@ public class Sample implements Comparable<Sample> {
 
 	@Override
 	public String toString() {
-		return "deviceID: " + deviceID + ", sessionID: " + sessionID + ", timestamp: " + timestamp + " value: " + value;
+		return GsonSerializer.serialize(this);
 	}
 }
