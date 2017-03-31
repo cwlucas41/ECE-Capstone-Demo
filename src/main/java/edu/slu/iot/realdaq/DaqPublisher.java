@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
 
+import edu.slu.iot.IoTClient;
 import edu.slu.iot.Publisher;
 import edu.slu.iot.data.GsonSerializer;
 import edu.slu.iot.data.Sample;
@@ -16,8 +17,8 @@ public class DaqPublisher extends Publisher {
   private String sessionID;
   private String deviceID = "defaultDeviceID";
 
-  public DaqPublisher(String topic, AWSIotQos qos, String sessionID) {
-    super(topic, qos);
+  public DaqPublisher(IoTClient client, String topic, AWSIotQos qos, String sessionID) {
+    super(client, topic, qos);
     this.sessionID = sessionID;
   }
 

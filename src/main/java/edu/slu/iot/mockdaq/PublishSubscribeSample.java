@@ -35,6 +35,6 @@ public class PublishSubscribeSample {
     	IoTClient client = new IoTClient("Certificate1/conf.txt");
     	
         client.subscribe(new TestTopicListener("test", AWSIotQos.QOS0));
-        client.publish(new TestPublisher("test", AWSIotQos.QOS0, "demo"));
+        client.publish(new TestPublisher(client, "test", AWSIotQos.QOS0, "demo"));
     }
 }

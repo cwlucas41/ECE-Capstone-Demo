@@ -1,11 +1,13 @@
 package edu.slu.iot.data;
 
+import com.google.gson.annotations.Expose;
+
 public class Sample implements Comparable<Sample> {
 	
-	private String deviceID;
-	private String sessionID;
-	private long timestamp;
-	private float value;
+	@Expose private String deviceID;
+	@Expose private String sessionID;
+	@Expose private long timestamp;
+	@Expose private float value;
 	
 	public Sample(String deviceID, String sessionID, long timestamp, float value) {
 		this.deviceID = deviceID;

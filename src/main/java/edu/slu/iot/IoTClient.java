@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Scanner;
 
 import com.amazonaws.services.iot.client.AWSIotException;
+import com.amazonaws.services.iot.client.AWSIotMessage;
 import com.amazonaws.services.iot.client.AWSIotMqttClient;
 import com.amazonaws.services.iot.client.AWSIotTopic;
 import com.amazonaws.services.iot.client.sample.sampleUtil.SampleUtil;
@@ -13,11 +14,15 @@ import com.amazonaws.services.iot.client.sample.sampleUtil.SampleUtil.KeyStorePa
 
 public class IoTClient {
 	
-	public static AWSIotMqttClient awsIotClient;
+	private AWSIotMqttClient awsIotClient;
 	
 	public IoTClient(String filename) throws AWSIotException {
         initClient(filename);
         awsIotClient.connect();
+	}
+	
+	public void publish(AWSIotMessage message) throws AWSIotException {
+		awsIotClient.publish(message);
 	}
 	
 	public Thread publish(Publisher publisher) throws InterruptedException {

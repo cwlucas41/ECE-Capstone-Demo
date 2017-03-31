@@ -3,6 +3,7 @@ package edu.slu.iot.mockdaq;
 import com.amazonaws.services.iot.client.AWSIotMessage;
 import com.amazonaws.services.iot.client.AWSIotQos;
 
+import edu.slu.iot.IoTClient;
 import edu.slu.iot.Publisher;
 import edu.slu.iot.data.GsonSerializer;
 import edu.slu.iot.data.Sample;
@@ -12,8 +13,8 @@ public class TestPublisher extends Publisher {
 	private String sessionID;
 	private String deviceID = "defaultDeviceID";
 	
-	public TestPublisher(String topic, AWSIotQos qos, String sessionID) {
-		super(topic, qos);
+	public TestPublisher(IoTClient client, String topic, AWSIotQos qos, String sessionID) {
+		super(client, topic, qos);
 		this.sessionID = sessionID;
 	}
 
