@@ -41,6 +41,10 @@ public class IoTClient {
 		awsIotClient.unsubscribe(topic);
 	}
 	
+	public void disconnect() throws AWSIotException {
+		awsIotClient.disconnect();
+	}
+	
     public void initClient(String filename) {
     	
     	File config = new File(filename);
