@@ -9,17 +9,19 @@ import com.google.gson.JsonParser;
 
 import edu.slu.iot.IoTClient;
 
-public class StateSink {
+public class StateSink<T extends State> {
 	
 	private static JsonParser jp = new JsonParser();
 	private IoTClient client;
-	private DaqState state;
+	private T state;
 	private String shadowTopicPrefix;
+	private Class<T> clazz;
 	
-	public StateSink(IoTClient client, String shadowTopicPrefix, StateListener listener) {
+	public StateSink(IoTClient client, String shadowTopicPrefix, Class<T> clazz, T state) {
 		this.client = client;
-		this.state = new DaqState(listener);
 		this.shadowTopicPrefix = shadowTopicPrefix;
+		this.clazz = clazz;
+		this.state = state;
 		
 		try {
 			client.subscribe(new AWSIotTopic(shadowTopicPrefix + "/update/delta", AWSIotQos.QOS1) {
@@ -47,13 +49,16 @@ public class StateSink {
 	}	
 	
 	private void updateStateAndReport(JsonObject desiredInJson) {
-		DaqState updatedState = GsonSerializer.deserialize(desiredInJson.toString(), DaqState.class);
-    	state.update(updatedState);
-        String stateString = "{\"state\":{\"reported\":" + GsonSerializer.serialize(state) + "}}";
-    	try {
-			client.publish(new AWSIotMessage(shadowTopicPrefix + "/update", AWSIotQos.QOS1, stateString));
-		} catch (AWSIotException e) {
-			e.printStackTrace();
+		if (desiredInJson != null) {
+			T updatedState = GsonSerializer.deserialize(desiredInJson.toString(), clazz);
+	    	state.update(updatedState);
+	        String stateString = "{\"state\":{\"reported\":" + state.serialize() + "}}";
+
+	    	try {
+				client.publish(new AWSIotMessage(shadowTopicPrefix + "/update", AWSIotQos.QOS1, stateString));
+			} catch (AWSIotException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 }

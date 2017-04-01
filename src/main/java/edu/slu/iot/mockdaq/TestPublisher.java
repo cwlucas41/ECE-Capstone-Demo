@@ -26,7 +26,7 @@ public class TestPublisher extends Publisher {
         	long millis = System.currentTimeMillis();
         	
             Sample s = new Sample(deviceID, sessionID, millis, (float) Math.sin((double) millis / 1000));
-            String jsonSample = GsonSerializer.serialize(s);
+            String jsonSample = s.serialize();
             AWSIotMessage message = new NonBlockingPublishListener(topic, qos, jsonSample);
             
             publish(message);
@@ -51,17 +51,17 @@ public class TestPublisher extends Publisher {
 
 	    @Override
 	    public void onSuccess() {
-	        System.out.println(System.currentTimeMillis() + ": >>> " + sample);
+	        System.out.println(System.currentTimeMillis() + ": >>> " + sample.serialize());
 	    }
 
 	    @Override
 	    public void onFailure() {
-	        System.out.println(System.currentTimeMillis() + ": publish failed for " + sample);
+	        System.out.println(System.currentTimeMillis() + ": publish failed for " + sample.serialize());
 	    }
 
 	    @Override
 	    public void onTimeout() {
-	        System.out.println(System.currentTimeMillis() + ": publish timeout for " + sample);
+	        System.out.println(System.currentTimeMillis() + ": publish timeout for " + sample.serialize());
 	    }
 
 	}

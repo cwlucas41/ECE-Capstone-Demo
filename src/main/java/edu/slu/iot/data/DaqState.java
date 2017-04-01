@@ -2,21 +2,18 @@ package edu.slu.iot.data;
 
 import java.util.Objects;
 
-import com.google.gson.annotations.Expose;
-
-public class DaqState {
-	
-	StateListener listener;
-		
-	@Expose private String topic = null;
-	@Expose private Double frequency = null;
-	@Expose private Double gain = null;
+public class DaqState extends State {
+			
+	private String topic = null;
+	private Double frequency = null;
+	private Double gain = null;
 	
 	public DaqState() {
+		this((StateListener) null);
 	}
 	
-	public DaqState (StateListener listener) {
-		this.listener = listener;
+	public DaqState(StateListener listener) {
+		super(listener);
 	}
 	
 	public DaqState(DaqState reported) {
@@ -24,10 +21,8 @@ public class DaqState {
 	}
 	
 	public DaqState(DaqState reported, StateListener listener) {
+		super(listener);
 		update(reported);
-		
-		this.listener = listener;
-		callListenerIfComplete();
 	}
 	
 	public DaqState(String topic, Double frequency, Double gain) {
@@ -35,12 +30,11 @@ public class DaqState {
 	}
 	
 	public DaqState(String topic, Double frequency, Double gain, StateListener listener) {
+		super(listener);
 		this.topic = topic;
 		this.frequency = frequency;
 		this.gain = gain;
-		
-		this.listener = listener;
-		callListenerIfComplete();
+		getListener().onStateChangeSucceded(this);
 	}
 
 	public String getTopic() {
@@ -57,46 +51,47 @@ public class DaqState {
 
 	public void setTopic(String topic) {
 		this.topic = topic;
-		callListenerIfComplete();
+		getListener().onStateChangeSucceded(this);
 	}
 
 	public void setFrequency(Double frequency) {
 		this.frequency = frequency;
-		callListenerIfComplete();
+		getListener().onStateChangeSucceded(this);
 	}
 
 	public void setGain(Double gain) {
 		this.gain = gain;
-		callListenerIfComplete();
+		getListener().onStateChangeSucceded(this);
 	}
 
-	public void update(DaqState newState) {
-		if (newState != null && !this.equals(newState)) {
-			if (newState.topic != null) {
-				topic = newState.topic;
+	@Override
+	public <T extends State> void update(T newState) {
+		if (newState instanceof DaqState) {
+			DaqState newDaqState = (DaqState) newState;
+			if (newDaqState != null && !this.equals(newDaqState)) {
+				
+				if (newDaqState.topic != null) {
+					topic = newDaqState.topic;
+				}
+				
+				if (newDaqState.frequency != null) {
+					frequency = newDaqState.frequency;
+				}
+				
+				if (newDaqState.gain != null) {
+					gain = newDaqState.gain;
+				}
+				getListener().onStateChangeSucceded(this);
 			}
-			
-			if (newState.frequency != null) {
-				frequency = newState.frequency;
-			}
-			
-			if (newState.gain != null) {
-				gain = newState.gain;
-			}
-			
-			callListenerIfComplete();
+		} else {
+			getListener().onStateChangeFailed(this);
 		}
+		
 	}
 	
 	public void update(String topic, Double frequency, Double gain) {
 		DaqState newState = new DaqState(topic, frequency, gain);
 		update(newState);
-	}
-	
-	private void callListenerIfComplete() {
-		if (listener != null) {
-			listener.onStateChange(this);
-		}
 	}
 	
 	@Override
@@ -108,10 +103,5 @@ public class DaqState {
 		return Objects.equals(topic, s.topic) && 
 				Objects.equals(frequency, s.frequency) &&
 				Objects.equals(gain, s.gain);
-	}
-	
-	@Override
-	public String toString() {
-		return GsonSerializer.serialize(this);
 	}
 }

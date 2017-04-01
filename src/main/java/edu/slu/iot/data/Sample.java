@@ -1,13 +1,11 @@
 package edu.slu.iot.data;
 
-import com.google.gson.annotations.Expose;
-
 public class Sample implements Comparable<Sample> {
 	
-	@Expose private String deviceID;
-	@Expose private String sessionID;
-	@Expose private long timestamp;
-	@Expose private float value;
+	private String deviceID;
+	private String sessionID;
+	private long timestamp;
+	private float value;
 	
 	public Sample(String deviceID, String sessionID, long timestamp, float value) {
 		this.deviceID = deviceID;
@@ -34,9 +32,8 @@ public class Sample implements Comparable<Sample> {
 		// sorts by increasing timestamp
 		return ((Long) timestamp).compareTo(o.timestamp);
 	}
-
-	@Override
-	public String toString() {
+	
+	public String serialize() {
 		return GsonSerializer.serialize(this);
 	}
 }
