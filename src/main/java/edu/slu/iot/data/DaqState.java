@@ -34,7 +34,6 @@ public class DaqState extends State {
 		this.topic = topic;
 		this.frequency = frequency;
 		this.gain = gain;
-		getListener().onStateChangeSucceded(this);
 	}
 
 	public String getTopic() {
