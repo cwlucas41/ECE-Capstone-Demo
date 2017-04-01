@@ -16,7 +16,7 @@ public class ShadowSample {
 	public static void main(String args[]) throws InterruptedException, AWSIotException {
     	
 		IoTClient client = new IoTClient("Certificate1/conf.txt");
-		String shadowTopicPrefix = "$aws/things/dev-daq/shadow";
+		String shadowTopicPrefix = "$aws/things/test-daq/shadow";
 								
 		new StateSink<DaqState>(client, shadowTopicPrefix, DaqState.class, new DaqState(new StateListener() {
 			@Override
@@ -32,23 +32,23 @@ public class ShadowSample {
 					);
 				}
 			}
-		}));	
-		
-		DaqState state = new StateSource<DaqState>(client, shadowTopicPrefix, DaqState.class).getState();
-		
-		Thread.sleep(2000);
-		state.update("a", 1.0, 2.0);
-		
-		Thread.sleep(2000);
-		state.update("b", 2.0, 4.0);
-		
-		Thread.sleep(2000);
-		state.update("c", 4.0, 8.0);
-		
-		Thread.sleep(2000);
-		state.update("d", 8.0, 16.0);
-		
-		Thread.sleep(2000);
-		System.exit(0);
+		}));
+				
+//		DaqState state = new StateSource<DaqState>(client, shadowTopicPrefix, DaqState.class).getState();
+//		
+//		Thread.sleep(2000);
+//		state.update("a", 1.0, 2.0);
+//		
+//		Thread.sleep(2000);
+//		state.update("b", 2.0, 4.0);
+//		
+//		Thread.sleep(2000);
+//		state.update("c", 4.0, 8.0);
+//		
+//		Thread.sleep(2000);
+//		state.update("d", 8.0, 16.0);
+//		
+//		Thread.sleep(2000);
+//		System.exit(0);
     }
 }
