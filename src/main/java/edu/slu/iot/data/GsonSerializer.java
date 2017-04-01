@@ -3,7 +3,7 @@ package edu.slu.iot.data;
 import com.google.gson.Gson;
 
 public class GsonSerializer {
-	public static final Gson gson = new Gson();
+	private static final Gson gson = new Gson();
 	
 	public static String serialize(Object object) {
 		return gson.toJson(object);
