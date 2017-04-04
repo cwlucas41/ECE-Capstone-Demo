@@ -284,6 +284,7 @@ public class StrandWindow {
 						playPauseButton.setEnabled(false);
 					}
 					else {
+						listModel.clearList();
 						try {
 							//currentStrand =  new Strand(topicField.getText(), configFile);
 							iotClient = new IoTClient(configFile.getPath());
@@ -336,6 +337,11 @@ public class StrandWindow {
 		}
 		public List<Sample> getList() {
 			return model;
+		}
+		public void clearList() {
+			int size = this.getSize();
+			model.clear();
+			fireIntervalRemoved(this, 0, size - 1);
 		}
 	}
 
