@@ -125,7 +125,7 @@ public class StrandWindow {
 				if (listModel.getSize() != 0) { //if we have any data from this session so far, only query data from before it began
 					startTime = listModel.getElementAt(0).getTimestamp();
 					spec = new QuerySpec()
-						.withRangeKeyCondition(new RangeKeyCondition("time").lt(startTime))
+						.withRangeKeyCondition(new RangeKeyCondition("timestamp").lt(startTime))
 						.withHashKey("sessionID", topicField.getText());
 				} else {
 					spec = new QuerySpec()
@@ -144,7 +144,6 @@ public class StrandWindow {
 				while (iterator.hasNext()) { //make sure this doesn't interrupt rendering too much
 				    item = iterator.next();
 				    writeToView.add(new Sample(item));
-				    System.out.println(item.toJSONPretty());
 				}
 				listModel.addBulkToList(writeToView);
 			}
@@ -192,7 +191,7 @@ public class StrandWindow {
 		
 		frame.getContentPane().add(connectButton, "cell 2 2,alignx center,growy");
 		
-		playPauseButton = new JButton("Pause");
+		playPauseButton = new JButton("Stop Scrolling");
 		playPauseButton.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent arg0) {
@@ -295,7 +294,7 @@ public class StrandWindow {
 							e.printStackTrace();
 						}
 						iotConnected = true;
-						connectionStatus.setText("Status: Connected"); //TODO: update this value appropriately
+						connectionStatus.setText("Status: Connected");
 					    connectButton.setText("Stop");
 					    playPauseButton.setEnabled(true);
 					}
