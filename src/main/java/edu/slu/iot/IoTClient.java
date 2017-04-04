@@ -7,6 +7,7 @@ import java.util.Scanner;
 
 import com.amazonaws.services.iot.client.AWSIotException;
 import com.amazonaws.services.iot.client.AWSIotMqttClient;
+import com.amazonaws.services.iot.client.AWSIotTimeoutException;
 import com.amazonaws.services.iot.client.AWSIotTopic;
 import com.amazonaws.services.iot.client.sample.sampleUtil.SampleUtil;
 import com.amazonaws.services.iot.client.sample.sampleUtil.SampleUtil.KeyStorePasswordPair;
@@ -31,6 +32,10 @@ public class IoTClient {
 	
 	public void subscribe(AWSIotTopic topic) throws AWSIotException {
 	    awsIotClient.subscribe(topic, true);
+	}
+	
+	public void unsubscribe(AWSIotTopic topic, int timeout) throws AWSIotException, AWSIotTimeoutException {
+	    awsIotClient.unsubscribe(topic, timeout);
 	}
 	
 	public String getTableName() {
