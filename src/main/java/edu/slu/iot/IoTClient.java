@@ -5,9 +5,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
+import com.amazonaws.services.iot.client.AWSIotDevice;
 import com.amazonaws.services.iot.client.AWSIotException;
 import com.amazonaws.services.iot.client.AWSIotMessage;
 import com.amazonaws.services.iot.client.AWSIotMqttClient;
+import com.amazonaws.services.iot.client.AWSIotTimeoutException;
 import com.amazonaws.services.iot.client.AWSIotTopic;
 import com.amazonaws.services.iot.client.sample.sampleUtil.SampleUtil;
 import com.amazonaws.services.iot.client.sample.sampleUtil.SampleUtil.KeyStorePasswordPair;
@@ -37,12 +39,16 @@ public class IoTClient {
 	    awsIotClient.subscribe(topic, true);
 	}
 	
-	public void unsubscribe(String topic) throws AWSIotException {
-		awsIotClient.unsubscribe(topic);
+	public void unsubscribe(String topic, int timeout) throws AWSIotException, AWSIotTimeoutException {
+		awsIotClient.unsubscribe(topic, timeout);
 	}
 	
 	public void disconnect() throws AWSIotException {
 		awsIotClient.disconnect();
+	}
+	
+	public void attach(AWSIotDevice device) throws AWSIotException {
+		awsIotClient.attach(device);
 	}
 	
     public void initClient(String filename) {

@@ -16,13 +16,14 @@ public class DaqStateSourceSinkIntegrationTest {
 	
 	IoTClient client;
 	String shadowTopicPrefix = "$aws/things/test-daq/shadow";
+	String thingName = "test-daq";
 	DaqState clientState;
 	int c = 0;
 	
 	@Before
 	public void setup() throws AWSIotException {
 		c = 0;
-		client = new IoTClient("Certificate1/conf.txt");
+		client = new IoTClient("Certificate2/conf.txt");
 	}
 
 	@Test
@@ -34,7 +35,7 @@ public class DaqStateSourceSinkIntegrationTest {
 		
 		clientState = new StateSource<DaqState>(client, shadowTopicPrefix, DaqState.class).getState();
 								
-		new StateSink<DaqState>(client, shadowTopicPrefix, DaqState.class, new DaqState(new StateListener() {
+		new StateSink<DaqState>(client, thingName, DaqState.class, new DaqState(new StateListener() {
 			@Override
 			public <T extends State> void onStateChangeSucceded(T state) {
 				if (state instanceof DaqState) {
@@ -65,7 +66,7 @@ public class DaqStateSourceSinkIntegrationTest {
 		
 		clientState = new StateSource<DaqState>(client, shadowTopicPrefix, DaqState.class).getState();
 								
-		new StateSink<DaqState>(client, shadowTopicPrefix, DaqState.class, new DaqState(new StateListener() {
+		new StateSink<DaqState>(client, thingName, DaqState.class, new DaqState(new StateListener() {
 			@Override
 			public <T extends State> void onStateChangeSucceded(T state) {
 				if (state instanceof DaqState) {
@@ -97,7 +98,7 @@ public class DaqStateSourceSinkIntegrationTest {
 		clientState = new StateSource<DaqState>(client, shadowTopicPrefix, DaqState.class).getState();
 		clientState.update("a", 1.0, 2.0);
 								
-		new StateSink<DaqState>(client, shadowTopicPrefix, DaqState.class, new DaqState(new StateListener() {
+		new StateSink<DaqState>(client, thingName, DaqState.class, new DaqState(new StateListener() {
 			@Override
 			public <T extends State> void onStateChangeSucceded(T state) {
 				if (state instanceof DaqState) {
