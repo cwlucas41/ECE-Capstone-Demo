@@ -89,5 +89,3 @@ public class DaqPublisher extends Publisher {
 
   }
 }
-
-

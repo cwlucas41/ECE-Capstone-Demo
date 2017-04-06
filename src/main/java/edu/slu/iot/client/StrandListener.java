@@ -17,7 +17,6 @@ package edu.slu.iot.client;
 import com.amazonaws.services.iot.client.AWSIotMessage;
 import com.amazonaws.services.iot.client.AWSIotQos;
 import com.amazonaws.services.iot.client.AWSIotTopic;
-
 import edu.slu.iot.data.GsonSerializer;
 import edu.slu.iot.data.Sample;
 
@@ -38,7 +37,6 @@ public class StrandListener extends AWSIotTopic {
     public void onMessage(AWSIotMessage message) {
     	Sample sample = GsonSerializer.deserialize(message.getStringPayload(), Sample.class);
         System.out.println(System.currentTimeMillis() + ": <<< " + sample.toString());
-        sw.writeLineToList(sample.toString());
+        sw.writeLineToList(sample);
     }
-
 }
