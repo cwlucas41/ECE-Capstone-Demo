@@ -1,0 +1,3 @@
+[default]
+ aws_access_key_id=AKIAI3D3MVGNSHGY4DOA
+ aws_secret_access_key=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

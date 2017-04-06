@@ -1,3 +1,4 @@
+
 package edu.slu.iot.mockdaq;
 
 import com.amazonaws.services.iot.client.AWSIotMessage;

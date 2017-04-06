@@ -16,7 +16,8 @@ import com.amazonaws.services.iot.client.sample.sampleUtil.SampleUtil.KeyStorePa
 
 public class IoTClient {
 	
-	private AWSIotMqttClient awsIotClient;
+	public static AWSIotMqttClient awsIotClient;
+	private String tableName;
 	
 	public IoTClient(String filename) throws AWSIotException {
         initClient(filename);
@@ -51,6 +52,10 @@ public class IoTClient {
 		awsIotClient.attach(device);
 	}
 	
+	public String getTableName() {
+		return tableName;
+	}
+	
     public void initClient(String filename) {
     	
     	File config = new File(filename);
@@ -78,6 +83,7 @@ public class IoTClient {
     	
         String clientEndpoint = configMap.get("clientEndpoint");
         String clientId = configMap.get("clientId");
+        tableName = configMap.get("tableName");
         String certificateFile = configMap.get("certificateFile");
         String privateKeyFile = configMap.get("privateKeyFile");
                 
