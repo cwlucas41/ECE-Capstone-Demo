@@ -230,7 +230,7 @@ public class StrandWindow {
 						Sample sample = null;
 						for (int i = 0; i < listModel.getSize(); i++) {
 							sample = listModel.getElementAt(i);
-							bwriter.write(sample.toString());
+							bwriter.write(Long.toString(sample.getTimestamp()) + ", " + Float.toString(sample.getValue()));
 							bwriter.newLine();
 						}
 						bwriter.close();
@@ -284,12 +284,12 @@ public class StrandWindow {
 						playPauseButton.setEnabled(false);
 					}
 					else {
-						listModel.clearList();
 						try {
 							//currentStrand =  new Strand(topicField.getText(), configFile);
 							iotClient = new IoTClient(configFile.getPath());
 							sListener = new StrandListener(topicField.getText(), AWSIotQos.QOS0, StrandWindow.this);
 					        iotClient.subscribe(sListener);
+					        listModel.clearList();
 					        
 						} catch (AWSIotException e) {
 							e.printStackTrace();
@@ -340,8 +340,10 @@ public class StrandWindow {
 		}
 		public void clearList() {
 			int size = this.getSize();
-			model.clear();
-			fireIntervalRemoved(this, 0, size - 1);
+			if (size > 0) {
+				model.clear();
+				fireIntervalRemoved(this, 0, size - 1);
+			}
 		}
 	}
 
