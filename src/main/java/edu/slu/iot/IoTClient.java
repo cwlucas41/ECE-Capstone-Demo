@@ -52,6 +52,10 @@ public class IoTClient {
 		awsIotClient.attach(device);
 	}
 	
+	public void unsubscribe(AWSIotTopic topic, int timeout) throws AWSIotException, AWSIotTimeoutException {
+	    awsIotClient.unsubscribe(topic, timeout);
+	}
+	
 	public String getTableName() {
 		return tableName;
 	}
