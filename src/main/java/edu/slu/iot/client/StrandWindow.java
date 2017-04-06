@@ -16,9 +16,12 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
 import java.util.Set;
 
 import edu.slu.iot.IoTClient;
@@ -120,32 +123,38 @@ public class StrandWindow {
 		frame.getContentPane().add(btnHist, "cell 3 2,alignx center,growy");
 		btnHist.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {				
-				long startTime = 0;
+				long startTime = Long.MIN_VALUE;
 				QuerySpec spec;
-				if (listModel.getSize() != 0) { //if we have any data from this session so far, only query data from before it began
-					startTime = listModel.getElementAt(0).getTimestamp();
-					spec = new QuerySpec()
-						.withRangeKeyCondition(new RangeKeyCondition("timestamp").lt(startTime))
-						.withHashKey("sessionID", topicField.getText());
-				} else {
-					spec = new QuerySpec()
-						.withRangeKeyCondition(new RangeKeyCondition("timestamp").gt(startTime))
-						.withHashKey("sessionID", topicField.getText());
+				String sessionID = topicField.getText();
+				if (sessionID == null) {
+					System.out.println("Please enter your session ID.");
 				}
-				dynamoDB = AmazonDynamoDBClientBuilder.standard()
-						.withRegion(Regions.US_WEST_2)
-						.withCredentials(new ProfileCredentialsProvider("DDBCert1/conf.txt", "default"))
-						.build();
-				Table table = new Table(dynamoDB, iotClient.getTableName()); //TODO: have this available even if you are not connected to a topic
-				ItemCollection<QueryOutcome> items = table.query(spec);
-				Iterator<Item> iterator = items.iterator();
-				Item item = null;
-				List<Sample> writeToView = new ArrayList<Sample>();
-				while (iterator.hasNext()) { //make sure this doesn't interrupt rendering too much
-				    item = iterator.next();
-				    writeToView.add(new Sample(item));
+				else {
+					if (listModel.getSize() != 0) { //if we have any data from this session so far, only query data from before it began
+						startTime = listModel.getElementAt(0).getTimestamp();
+						spec = new QuerySpec()
+							.withRangeKeyCondition(new RangeKeyCondition("timestamp").lt(startTime))
+							.withHashKey("sessionID", sessionID);
+					} else {
+						spec = new QuerySpec()
+							.withRangeKeyCondition(new RangeKeyCondition("timestamp").gt(startTime))
+							.withHashKey("sessionID", sessionID);
+					}
+					dynamoDB = AmazonDynamoDBClientBuilder.standard()
+							.withRegion(Regions.US_WEST_2)
+							.withCredentials(new ProfileCredentialsProvider("Certificate1/ddbconf.txt", "default"))
+							.build();
+					Table table = new Table(dynamoDB, getTableName());
+					ItemCollection<QueryOutcome> items = table.query(spec);
+					Iterator<Item> iterator = items.iterator();
+					Item item = null;
+					List<Sample> writeToView = new ArrayList<Sample>();
+					while (iterator.hasNext()) { //make sure this doesn't interrupt rendering too much
+					    item = iterator.next();
+					    writeToView.add(new Sample(item));
+					}
+					listModel.addBulkToList(writeToView);
 				}
-				listModel.addBulkToList(writeToView);
 			}
 		});
 		btnHist.setEnabled(false);
@@ -183,12 +192,11 @@ public class StrandWindow {
 		
 		JTextPane txtpnEnterTheTopic = new JTextPane();
 		txtpnEnterTheTopic.setBackground(SystemColor.control);
-		txtpnEnterTheTopic.setText("Enter the topic name");
+		txtpnEnterTheTopic.setText("Enter the session name");
 		frame.getContentPane().add(txtpnEnterTheTopic, "cell 0 2,alignx left,aligny center");
 		
-		connectButton = new JButton("Connect to topic");
+		connectButton = new JButton("Connect to session");
 		connectButton.setEnabled(false);
-		
 		frame.getContentPane().add(connectButton, "cell 2 2,alignx center,growy");
 		
 		playPauseButton = new JButton("Stop Scrolling");
@@ -220,6 +228,13 @@ public class StrandWindow {
 			public void mouseClicked(MouseEvent arg0) {
 				if (writeFile != null) {
 					File target = new File(writeFile.getPath());
+					if (!target.exists())
+						try {
+							target.createNewFile();
+						} catch (IOException e) {
+							System.out.println("Could not create new file " + writeFile.getPath());
+							e.printStackTrace();
+						}
 					FileOutputStream fstream = null;
 					try {fstream = new FileOutputStream(target);}
 					catch (FileNotFoundException fnfe) {
@@ -279,7 +294,7 @@ public class StrandWindow {
 							te.printStackTrace();
 						}
 						iotConnected = false;
-				        connectButton.setText("Connect to topic");
+				        connectButton.setText("Connect to session");
 				        connectionStatus.setText("Status: Not Connected");
 						playPauseButton.setEnabled(false);
 					}
@@ -311,6 +326,26 @@ public class StrandWindow {
 			   listView.ensureIndexIsVisible(lastIndex);
 			}
 		}
+	}
+	
+	private String getTableName() {
+		File config = new File(configFile.getPath());
+    	Scanner sc = null;
+		String tableName;
+		try {
+			sc = new Scanner(config);
+	    	String line = sc.nextLine();
+	    	String[] fields = line.split("\\s+");
+	    	if (fields.length != 2) {
+	    		throw new IllegalArgumentException("invalid format for config file");
+	    	}
+	    	tableName = fields[1];    	
+		} catch (FileNotFoundException e) {
+			throw new IllegalArgumentException("bad filename for config file");
+		} finally {
+			sc.close();
+		}
+		return tableName;
 	}
 	
 	public class AppendableView extends AbstractListModel<Sample> {
