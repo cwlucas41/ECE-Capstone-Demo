@@ -4,7 +4,6 @@ import com.amazonaws.services.iot.client.AWSIotDevice;
 import com.amazonaws.services.iot.client.AWSIotException;
 import com.amazonaws.services.iot.client.AWSIotMessage;
 import com.amazonaws.services.iot.client.AWSIotQos;
-import com.amazonaws.services.iot.client.AWSIotTimeoutException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -23,7 +22,6 @@ public class StateSink<T extends State> {
 		this.device = new AWSIotDevice(thingName) {
 			@Override
 			public void onShadowUpdate(String jsonState) {
-				System.out.println("\nupdate: " + jsonState);
 				updateStateAndReport(jsonState);
 			}
 		};
@@ -69,7 +67,6 @@ public class StateSink<T extends State> {
 					System.out.println("timeout");
 				}
 			}, 500);
-			System.out.println("updated shadow");
 		} catch (AWSIotException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

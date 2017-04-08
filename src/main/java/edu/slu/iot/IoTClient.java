@@ -16,7 +16,7 @@ import com.amazonaws.services.iot.client.sample.sampleUtil.SampleUtil.KeyStorePa
 
 public class IoTClient {
 	
-	public static AWSIotMqttClient awsIotClient;
+	public AWSIotMqttClient awsIotClient;
 	private String tableName;
 	
 	public IoTClient(String filename) throws AWSIotException {

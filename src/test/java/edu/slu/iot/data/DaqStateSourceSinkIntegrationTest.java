@@ -18,7 +18,18 @@ public class DaqStateSourceSinkIntegrationTest {
 	String shadowTopicPrefix = "$aws/things/test-daq/shadow";
 	String thingName = "test-daq";
 	DaqState clientState;
-	int c = 0;
+	int c;
+	StateListener listener = new StateListener() {
+		@Override
+		public <T extends State> void onStateChangeSucceded(T state) {
+			if (state instanceof DaqState) {
+				DaqState daqState = (DaqState) state;
+				System.out.println("sink changed to: " + daqState.serialize());
+				assertEquals(clientState, daqState);
+				c++;
+			}
+		}
+	};
 	
 	@Before
 	public void setup() throws AWSIotException {
@@ -26,111 +37,60 @@ public class DaqStateSourceSinkIntegrationTest {
 		client1 = new IoTClient("Certificate1/conf.txt");
 		client2 = new IoTClient("Certificate2/conf.txt");
 	}
-
-//	@Test
-//	public void fullTest() throws AWSIotException, InterruptedException {
-//		client.publish(new AWSIotMessage(shadowTopicPrefix + "/delete", AWSIotQos.QOS1, ""));
-//		
-//		// wait for delete to propogate
-//		Thread.sleep(2000);
-//		
-//		clientState = new StateSource<DaqState>(client, shadowTopicPrefix, DaqState.class).getState();
-//								
-//		new StateSink<DaqState>(client, thingName, DaqState.class, new DaqState(new StateListener() {
-//			@Override
-//			public <T extends State> void onStateChangeSucceded(T state) {
-//				if (state instanceof DaqState) {
-//					System.out.println("updated");
-//					DaqState daqState = (DaqState) state;
-//					assertEquals(clientState, daqState);
-//					c++;
-//				}
-//			}
-//		}));
-//				
-//
-//		Thread.sleep(2000);
-//		clientState.update("a", 1.0, 2.0);
-//		
-//		Thread.sleep(2000);
-//		clientState.update("b", 2.0, 4.0);
-//		
-//		Thread.sleep(2000);
-//		assertTrue(c == 2);
-//	}
 	
-//	@Test
-//	public void initializesWithNoDesiredState() throws AWSIotException, InterruptedException {
-//		client.publish(new AWSIotMessage(shadowTopicPrefix + "/delete", AWSIotQos.QOS1, ""));
-//		
-//		// wait for delete to propogate
-//		Thread.sleep(2000);
-//		
-//		clientState = new StateSource<DaqState>(client, shadowTopicPrefix, DaqState.class).getState();
-//								
-//		new StateSink<DaqState>(client, thingName, DaqState.class, new DaqState(new StateListener() {
-//			@Override
-//			public <T extends State> void onStateChangeSucceded(T state) {
-//				if (state instanceof DaqState) {
-//					DaqState daqState = (DaqState) state;
-//					assertEquals(clientState, daqState);
-//					c++;
-//				}
-//			}
-//		}));
-//				
-//
-//		Thread.sleep(2000);
-//		clientState.update("a", 1.0, 2.0);
-//		
-//		Thread.sleep(2000);
-//		clientState.update("b", 2.0, 4.0);
-//		
-//		Thread.sleep(2000);
-//		assertTrue(c == 2);
-//	}
+	@Test
+	public void initializesWithNoDesiredState() throws AWSIotException, InterruptedException {
+		client1.publish(new AWSIotMessage(shadowTopicPrefix + "/delete", AWSIotQos.QOS1, ""));
+		
+		// wait for delete to propogate
+		Thread.sleep(2000);
+		
+		clientState = new StateSource<DaqState>(client1, thingName, DaqState.class).getState();
+		
+		Thread.sleep(2000);
+								
+		new StateSink<DaqState>(client2, thingName, DaqState.class, new DaqState(listener));
+				
+
+		Thread.sleep(2000);
+		clientState.update("a", 1.0, 2.0);
+		
+		Thread.sleep(2000);
+		clientState.update("b", 2.0, 4.0);
+		
+		Thread.sleep(2000);
+		assertTrue(c == 2);
+	}
 	
 	@Test
 	public void initializesWithDesiredState() throws AWSIotException, InterruptedException {
-//		client1.publish(new AWSIotMessage(shadowTopicPrefix + "/delete", AWSIotQos.QOS1, ""));
+		client1.publish(new AWSIotMessage(shadowTopicPrefix + "/delete", AWSIotQos.QOS1, ""));
 		
-//		// wait for delete to propogate
-//		Thread.sleep(2000);
-//		
-//		clientState = new StateSource<DaqState>(client1, thingName, DaqState.class).getState();
-//		
-//		clientState.update("a", 1.0, 2.0);
-//		Thread.sleep(2000);
+		// wait for delete to propogate
+		Thread.sleep(2000);
+		
+		clientState = new StateSource<DaqState>(client1, thingName, DaqState.class).getState();
+		
+		// set initial desired state
+		clientState.update("a", 1.0, 2.0);
+		Thread.sleep(2000);
 						
 		System.out.println("creating sink");
-		new StateSink<DaqState>(client2, thingName, DaqState.class, new DaqState(new StateListener() {
-			@Override
-			public <T extends State> void onStateChangeSucceded(T state) {
-				if (state instanceof DaqState) {
-					DaqState daqState = (DaqState) state;
-//					assertEquals(clientState, daqState);
-					c++;
-				}
-			}
-		}));
-		
-		while(true) {
-			Thread.sleep(50);
-		}
+		new StateSink<DaqState>(client2, thingName, DaqState.class, new DaqState(listener));
 		
 		
-//		Thread.sleep(2000);
-//		clientState.update("b", 2.0, 4.0);
-//		
-//		Thread.sleep(2000);
-//		assertTrue(c == 2);
+		// update desired state
+		Thread.sleep(2000);
+		clientState.update("b", 2.0, 4.0);
+		
+		Thread.sleep(2000);
+		assertTrue(c == 2);
 	}
 	
 	@After
 	public void tearDown() throws AWSIotException, InterruptedException {
 		client1.disconnect();
-		client1 = null;
-		Thread.sleep(2000);
+		client2.disconnect();
 	}
 
 }
