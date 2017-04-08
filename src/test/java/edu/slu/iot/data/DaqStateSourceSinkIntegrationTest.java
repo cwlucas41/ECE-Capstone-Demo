@@ -59,7 +59,16 @@ public class DaqStateSourceSinkIntegrationTest {
 		clientState.update("b", 2.0, 4.0);
 		
 		Thread.sleep(2000);
-		assertTrue(c == 2);
+		clientState.setFrequency(50000.0);
+
+		Thread.sleep(2000);
+		clientState.setTopic("test");
+
+		Thread.sleep(2000);
+		clientState.setGain(10.0);
+		
+		Thread.sleep(2000);
+		assertTrue(c == 5);
 	}
 	
 	@Test
@@ -84,7 +93,16 @@ public class DaqStateSourceSinkIntegrationTest {
 		clientState.update("b", 2.0, 4.0);
 		
 		Thread.sleep(2000);
-		assertTrue(c == 2);
+		clientState.setFrequency(50000.0);
+
+		Thread.sleep(2000);
+		clientState.setTopic("test");
+
+		Thread.sleep(2000);
+		clientState.setGain(10.0);
+		
+		Thread.sleep(2000);
+		assertTrue(c == 5);
 	}
 	
 	@After
