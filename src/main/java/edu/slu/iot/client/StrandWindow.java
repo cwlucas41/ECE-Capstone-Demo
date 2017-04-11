@@ -16,13 +16,9 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
-import java.util.Set;
 
 import edu.slu.iot.IoTClient;
 import edu.slu.iot.client.Strand;
@@ -53,6 +49,7 @@ import java.awt.SystemColor;
 import javax.swing.JList;
 import javax.swing.AbstractListModel;
 import javax.swing.JSeparator;
+import javax.swing.JCheckBox;
 
 public class StrandWindow {
 
@@ -63,13 +60,12 @@ public class StrandWindow {
 	private IoTClient iotClient;
 	private JList listView;
 	private AppendableView listModel = new AppendableView();
-	private boolean streamPaused = false;
 	private boolean iotConnected = false;
 	
 	private JFrame frame;
 	private JTextField topicField;
 	private JButton connectButton;
-	private JButton playPauseButton;
+	private JCheckBox scrollingCheckBox;
 	private JTextPane connectionStatus;
 	
 	static private AmazonDynamoDB dynamoDB;
@@ -199,21 +195,9 @@ public class StrandWindow {
 		connectButton.setEnabled(false);
 		frame.getContentPane().add(connectButton, "cell 2 2,alignx center,growy");
 		
-		playPauseButton = new JButton("Stop Scrolling");
-		playPauseButton.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent arg0) {
-				streamPaused = !streamPaused;
-				if (streamPaused == true) {
-					playPauseButton.setText("Scroll on update");
-				}
-				else {
-					playPauseButton.setText("Stop scrolling");
-				}
-			}
-		});
-		frame.getContentPane().add(playPauseButton, "cell 2 3 2 1,grow");
-		playPauseButton.setEnabled(false);
+		scrollingCheckBox = new JCheckBox("Scroll to Bottom");
+		frame.getContentPane().add(scrollingCheckBox, "cell 3 3");
+		scrollingCheckBox.setSelected(true);
 		
 		JSeparator secondSeparator = new JSeparator();
 		frame.getContentPane().add(secondSeparator, "cell 0 4 4 1,grow");
@@ -296,7 +280,6 @@ public class StrandWindow {
 						iotConnected = false;
 				        connectButton.setText("Connect to session");
 				        connectionStatus.setText("Status: Not Connected");
-						playPauseButton.setEnabled(false);
 					}
 					else {
 						try {
@@ -312,7 +295,6 @@ public class StrandWindow {
 						iotConnected = true;
 						connectionStatus.setText("Status: Connected");
 					    connectButton.setText("Stop");
-					    playPauseButton.setEnabled(true);
 					}
 			}
 		});
@@ -320,7 +302,7 @@ public class StrandWindow {
 	
 	public void writeLineToList(Sample sampleToWrite) {
 		listModel.appendToList(sampleToWrite);
-		if (!streamPaused) {
+		if (scrollingCheckBox.isSelected()) {
 			int lastIndex = listModel.getSize() - 1;
 			if (lastIndex >= 0) {
 			   listView.ensureIndexIsVisible(lastIndex);
