@@ -50,6 +50,9 @@ import javax.swing.JList;
 import javax.swing.AbstractListModel;
 import javax.swing.JSeparator;
 import javax.swing.JCheckBox;
+import com.github.lgooddatepicker.components.*;
+import com.github.lgooddatepicker.components.DateTimePicker;
+import com.github.lgooddatepicker.components.TimePickerSettings.TimeIncrement;
 
 public class StrandWindow {
 
@@ -65,6 +68,8 @@ public class StrandWindow {
 	private JFrame frame;
 	private JTextField topicField;
 	private JButton connectButton;
+	private JButton allPastDataButton;
+	private JButton rangePastDataButton;
 	private JCheckBox scrollingCheckBox;
 	private JTextPane connectionStatus;
 	
@@ -106,18 +111,77 @@ public class StrandWindow {
 	 */
 	private void initialize() {
 		frame = new JFrame();
-		frame.setBounds(100, 100, 525, 300);
+		frame.setBounds(100, 100, 559, 350);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.getContentPane().setLayout(new MigLayout("", "[157.00px,grow][91px][grow][grow]", "[25.00px][][56.00px,grow][][30.00][56.00,grow][grow]"));
+		frame.getContentPane().setLayout(new MigLayout("", "[157.00px,grow][91px,grow][grow][grow]", "[25.00px][][8.00px,grow][][][grow][1.00][27.00,grow][grow]"));
 		
 		JTextPane txtpnChooseAConfiguration = new JTextPane();
 		txtpnChooseAConfiguration.setBackground(SystemColor.control);
 		txtpnChooseAConfiguration.setText("Choose a configuration file (.conf)");
 		frame.getContentPane().add(txtpnChooseAConfiguration, "cell 0 0,alignx left,aligny center");
 		
-		JButton btnHist = new JButton("Add past data");
-		frame.getContentPane().add(btnHist, "cell 3 2,alignx center,growy");
-		btnHist.addActionListener(new ActionListener() {
+		JTextPane pastDataTextBox = new JTextPane();
+		pastDataTextBox.setBackground(SystemColor.menu);
+		pastDataTextBox.setText("Start time:");
+		frame.getContentPane().add(pastDataTextBox, "cell 0 4,alignx left,aligny center");
+		
+		JButton btnBrowse = new JButton("Browse...");
+		btnBrowse.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent arg0) {
+				JFileChooser configFileChooser = new JFileChooser();
+				File workingDirectory = new File(System.getProperty("user.dir"));
+				configFileChooser.setCurrentDirectory(workingDirectory);
+				frame.getContentPane().add(configFileChooser);
+				int chooseStatus = configFileChooser.showOpenDialog(frame);
+				if (chooseStatus == JFileChooser.APPROVE_OPTION) {
+                    configFile = configFileChooser.getSelectedFile();
+                    connectButton.setEnabled(true);
+                    allPastDataButton.setEnabled(true);
+				}
+			}
+		});
+		frame.getContentPane().add(btnBrowse, "cell 1 0,growx,aligny center");
+		
+		
+		connectionStatus = new JTextPane();
+		connectionStatus.setBackground(SystemColor.control);
+		connectionStatus.setText("Status: Not Connected");
+		frame.getContentPane().add(connectionStatus, "cell 2 0,alignx center,aligny center");
+		
+		JSeparator firstSeparator = new JSeparator();
+		frame.getContentPane().add(firstSeparator, "cell 0 1 4 1,grow");
+		
+		topicField = new JTextField();
+		frame.getContentPane().add(topicField, "cell 1 2,growx,aligny center");
+		topicField.setColumns(10);
+		
+		JTextPane txtpnEnterTheTopic = new JTextPane();
+		txtpnEnterTheTopic.setBackground(SystemColor.control);
+		txtpnEnterTheTopic.setText("Enter the session name");
+		frame.getContentPane().add(txtpnEnterTheTopic, "cell 0 2,alignx left,aligny center");
+		
+		connectButton = new JButton("Connect to session");
+		connectButton.setEnabled(false);
+		frame.getContentPane().add(connectButton, "cell 2 2,growx,aligny center");
+		
+		scrollingCheckBox = new JCheckBox("Scroll to Bottom");
+		frame.getContentPane().add(scrollingCheckBox, "cell 3 2,growx,aligny center");
+		scrollingCheckBox.setSelected(true);
+		
+		JSeparator secondSeparator = new JSeparator();
+		frame.getContentPane().add(secondSeparator, "cell 0 3 4 1,growx");
+		
+		TimePickerSettings timeSettings1 = new TimePickerSettings();
+		timeSettings1.setInitialTimeToNow();
+		timeSettings1.generatePotentialMenuTimes(TimeIncrement.FiveMinutes, null, null);
+		DatePickerSettings dateSettings1 = new DatePickerSettings();
+		DateTimePicker startDateTimePicker = new DateTimePicker(dateSettings1, timeSettings1);
+		frame.getContentPane().add(startDateTimePicker, "cell 1 4 2 1,grow");
+		
+		allPastDataButton = new JButton("Add all past data");
+		frame.getContentPane().add(allPastDataButton, "cell 3 4,growx,aligny center");
+		allPastDataButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {				
 				long startTime = Long.MIN_VALUE;
 				QuerySpec spec;
@@ -153,59 +217,31 @@ public class StrandWindow {
 				}
 			}
 		});
-		btnHist.setEnabled(false);
+		allPastDataButton.setEnabled(false);
 		
-		JButton btnBrowse = new JButton("Browse...");
-		btnBrowse.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent arg0) {
-				JFileChooser configFileChooser = new JFileChooser();
-				File workingDirectory = new File(System.getProperty("user.dir"));
-				configFileChooser.setCurrentDirectory(workingDirectory);
-				frame.getContentPane().add(configFileChooser);
-				int chooseStatus = configFileChooser.showOpenDialog(frame);
-				if (chooseStatus == JFileChooser.APPROVE_OPTION) {
-                    configFile = configFileChooser.getSelectedFile();
-                    connectButton.setEnabled(true);
-                    btnHist.setEnabled(true);
-				}
-			}
-		});
-		frame.getContentPane().add(btnBrowse, "cell 1 0,alignx center,growy");
+		JTextPane txtpnEndTime = new JTextPane();
+		txtpnEndTime.setBackground(SystemColor.menu);
+		txtpnEndTime.setText("End time:");
+		frame.getContentPane().add(txtpnEndTime, "cell 0 5,grow");
+		
+		TimePickerSettings timeSettings2 = new TimePickerSettings();
+		timeSettings2.setInitialTimeToNow();
+		timeSettings2.generatePotentialMenuTimes(TimeIncrement.FiveMinutes, null, null);
+		DatePickerSettings dateSettings2 = new DatePickerSettings();
+		DateTimePicker stopDateTimePicker = new DateTimePicker(dateSettings2, timeSettings2);
+		frame.getContentPane().add(stopDateTimePicker, "cell 1 5 2 1,grow");
+		
+		rangePastDataButton = new JButton("Add range of past data");
+		frame.getContentPane().add(rangePastDataButton, "cell 3 5");
 		
 		
-		connectionStatus = new JTextPane();
-		connectionStatus.setBackground(SystemColor.control);
-		connectionStatus.setText("Status: Not Connected");
-		frame.getContentPane().add(connectionStatus, "cell 2 0,alignx center,aligny center");
-		
-		JSeparator firstSeparator = new JSeparator();
-		frame.getContentPane().add(firstSeparator, "cell 0 1 4 1,grow");
-		
-		topicField = new JTextField();
-		frame.getContentPane().add(topicField, "cell 1 2,alignx center,aligny center");
-		topicField.setColumns(10);
-		
-		JTextPane txtpnEnterTheTopic = new JTextPane();
-		txtpnEnterTheTopic.setBackground(SystemColor.control);
-		txtpnEnterTheTopic.setText("Enter the session name");
-		frame.getContentPane().add(txtpnEnterTheTopic, "cell 0 2,alignx left,aligny center");
-		
-		connectButton = new JButton("Connect to session");
-		connectButton.setEnabled(false);
-		frame.getContentPane().add(connectButton, "cell 2 2,alignx center,growy");
-		
-		scrollingCheckBox = new JCheckBox("Scroll to Bottom");
-		frame.getContentPane().add(scrollingCheckBox, "cell 3 3");
-		scrollingCheckBox.setSelected(true);
-		
-		JSeparator secondSeparator = new JSeparator();
-		frame.getContentPane().add(secondSeparator, "cell 0 4 4 1,grow");
+		JSeparator thirdSeparator = new JSeparator();
+		frame.getContentPane().add(thirdSeparator, "cell 0 6 4 1,grow");
 		
 		JTextPane txtpnChooseAFile = new JTextPane();
 		txtpnChooseAFile.setText("Choose or create a file to write to");
 		txtpnChooseAFile.setBackground(SystemColor.menu);
-		frame.getContentPane().add(txtpnChooseAFile, "cell 0 5,growx,aligny center");
+		frame.getContentPane().add(txtpnChooseAFile, "cell 0 7,growx,aligny center");
 		JButton writeButton = new JButton("Write to file");
 		writeButton.addMouseListener(new MouseAdapter() {
 			@Override
@@ -241,7 +277,7 @@ public class StrandWindow {
 			}
 		});
 		writeButton.setEnabled(false);
-		frame.getContentPane().add(writeButton, "cell 2 5,alignx center,growy");
+		frame.getContentPane().add(writeButton, "cell 2 7,growx,aligny center");
 		
 		JButton writePathButton = new JButton("Find file...");
 		writePathButton.addMouseListener(new MouseAdapter() {
@@ -258,10 +294,10 @@ public class StrandWindow {
 				}
 			}
 		});
-		frame.getContentPane().add(writePathButton, "cell 1 5,alignx center,growy");
+		frame.getContentPane().add(writePathButton, "cell 1 7,growx,aligny center");
 		
 		JScrollPane scrollPane = new JScrollPane();
-		frame.getContentPane().add(scrollPane, "cell 0 6 4 1,grow");
+		frame.getContentPane().add(scrollPane, "cell 0 8 4 1,grow");
 		
 		listView = new JList(listModel);
 		scrollPane.setViewportView(listView);
