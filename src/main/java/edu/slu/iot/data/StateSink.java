@@ -11,6 +11,8 @@ import edu.slu.iot.IoTClient;
 
 public class StateSink<T extends State> {
 	
+	private static JsonParser jp = new JsonParser();
+	
 	private T state;
 	private Class<T> clazz;
 	private AWSIotDevice device;
@@ -32,15 +34,18 @@ public class StateSink<T extends State> {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-			
+		
+		String initialState = null;
 		// get initial state once
 		try {
-			JsonParser jp = new JsonParser();
-			String jsonState = device.get();
-			JsonObject desired = jp.parse(jsonState).getAsJsonObject().getAsJsonObject("state").getAsJsonObject("desired");
-			updateStateAndReport(desired.toString());
+			initialState = device.get();
 		} catch (AWSIotException e) {
-			System.out.println("skipping get");
+			// no state exists, continue
+		}
+		
+		if (initialState != null) {
+			JsonObject desired = jp.parse(initialState).getAsJsonObject().getAsJsonObject("state").getAsJsonObject("desired");
+			updateStateAndReport(desired.toString());
 		}
 	}	
 	
@@ -50,23 +55,7 @@ public class StateSink<T extends State> {
 			newState = GsonSerializer.deserialize(jsonState, clazz);
 			state.update(newState); 
 			String reported = "{\"state\": {\"reported\":" + state.serialize() + "}}";			
-			device.update(new AWSIotMessage("", AWSIotQos.QOS1, reported) {
-				@Override
-				public void onFailure() {
-					System.out.println("failure");
-				}
-				
-				
-				@Override
-				public void onSuccess() {
-					System.out.println("success");
-				}
-				
-				@Override
-				public void onTimeout() {
-					System.out.println("timeout");
-				}
-			}, 500);
+			device.update(new AWSIotMessage("", AWSIotQos.QOS1, reported), 500);
 		} catch (AWSIotException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
