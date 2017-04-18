@@ -11,7 +11,7 @@ public class PublishSample {
     	
 		IoTClient client = new IoTClient("/home/debian/ECE_Capstone_Networking/Certificate1/conf.txt");
     	
-		client.publish(new DaqPublisher("RealDaq", AWSIotQos.QOS1, "DAQ"));
+		client.publish(new DaqPublisher(client, "RealDaq", AWSIotQos.QOS1, "DAQ"));
 
     }
 }
