@@ -34,6 +34,10 @@ public class Sample implements Comparable<Sample> {
 		// sorts by increasing timestamp
 		return ((Long) timestamp).compareTo(o.timestamp);
 	}
+	
+	public String serialize() {
+		return GsonSerializer.serialize(this);
+	}
 
 	@Override
 	public String toString() {

@@ -34,7 +34,7 @@ public class TestTopicListener extends AWSIotTopic {
     @Override
     public void onMessage(AWSIotMessage message) {
     	Sample sample = GsonSerializer.deserialize(message.getStringPayload(), Sample.class);
-        System.out.println(System.currentTimeMillis() + ": <<< " + sample.toString());
+        System.out.println(System.currentTimeMillis() + ": <<< " + sample.serialize());
     }
 
 }
