@@ -23,8 +23,7 @@ public class DaqPublisher extends Publisher {
 
   private String sessionID;
   private String deviceID = "defaultDeviceID";
-  private static final Gson gson = new Gson();
-
+  private static final String adcReader = "/home/debian/ECE-Capstone-Demo/src/main/c/ECE_Capstone/reader";
   public DaqPublisher(IoTClient client, String topic, AWSIotQos qos, String sessionID) {
     super(client, topic, qos);
     this.sessionID = sessionID;
@@ -33,26 +32,28 @@ public class DaqPublisher extends Publisher {
   @Override
   public void run() {
     try {
-      Process p = Runtime.getRuntime().exec("../../../../../c/ECE_Capstone_ADC/libpruio-0.2/src/c_examples/reader");
+      //System.out.println("About to Create Process");
+      Process p = Runtime.getRuntime().exec(adcReader);
       BufferedReader in = 
         new BufferedReader(new InputStreamReader(p.getInputStream()));
 
+      //System.out.println("Procss Created. Getting input");
       while (in.ready()) {
-        //System.out.println(in.readLine());
-        String s = in.readLine();
-        String jsonSample = gson.toJson(s);
-        AWSIotMessage message = new NonBlockingPublishListener(topic, qos, jsonSample);
+        String[] line = in.readLine().split(" ");
+        //System.out.println(String.join(" ",line));
+        float in_volts = (float) Integer.parseInt(line[1]);
+        Sample s = new Sample(deviceID,sessionID,Long.parseLong(line[0].split(":")[1]), in_volts );
+        AWSIotMessage message = new NonBlockingPublishListener(topic, qos, s.serialize());
         publish(message);
       }
 
       try{ 
         Thread.sleep(1000);
       }catch(InterruptedException e){
-
+        e.printStackTrace();
       }
     }catch(IOException e){
-
-      //NOT HADNLING SHIT
+      e.printStackTrace();
     }
   }
 
