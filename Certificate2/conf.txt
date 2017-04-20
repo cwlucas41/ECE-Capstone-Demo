@@ -1,3 +1,5 @@
+tableName Sample
+thingName real-daq
 clientEndpoint a3jty4ymt2tb55.iot.us-west-2.amazonaws.com
 clientId test2
 certificateFile Certificate2/53f3fb5604-certificate.pem.crt
