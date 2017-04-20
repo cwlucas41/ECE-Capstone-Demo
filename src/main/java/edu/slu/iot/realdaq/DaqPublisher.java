@@ -11,6 +11,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.IOException;
 import edu.slu.iot.Publisher;
 
 public class DaqPublisher extends Publisher {
@@ -25,34 +28,38 @@ public class DaqPublisher extends Publisher {
     super(topic, qos);
     this.sessionID = sessionID;
   }
-  
+
   @Override
   public void run() {
-     
-    Process p = Runtime.getRuntime().exec("../../../../../c/ECE_Capstone_ADC/reader");
+    try {
+      Process p = Runtime.getRuntime().exec("../../../../../c/ECE_Capstone_ADC/reader");
       BufferedReader in = 
         new BufferedReader(new InputStreamReader(p.getInputStream()));
-      
+
       while (in.ready()) {
         //System.out.println(in.readLine());
+        String s = in.readLine();
         String jsonSample = gson.toJson(s);
         AWSIotMessage message = new NonBlockingPublishListener(topic, qos, jsonSample);
         publish(message);
       }
-    
-    try{ 
-      Thread.sleep(1000);
-    }
-    catch(InterruptedException e){
+
+      try{ 
+        Thread.sleep(1000);
+      }catch(InterruptedException e){
+
+        //NOT HADNLING SHIT
+      }
+    }catch(IOException e){
+
       //NOT HADNLING SHIT
     }
-
     System.err.println("FINAL: " + c.intValue());
   }
 
   private class NonBlockingPublishListener extends AWSIotMessage {
-	  
-	Sample sample;
+
+    Sample sample;
 
     public NonBlockingPublishListener(String topic, AWSIotQos qos, String payload) {
       super(topic, qos, payload);
