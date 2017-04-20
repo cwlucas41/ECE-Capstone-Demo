@@ -32,7 +32,7 @@ public class StateSource<T extends State> {
 							try {
 								String desired = "{\"state\":{\"desired\":" + state.serialize() + "}}";
 								device.update(desired);
-								System.out.println("source changeed to: " + desired);
+								System.out.println("source changed to: " + desired);
 							} catch (AWSIotException e) {
 								e.printStackTrace();
 							}

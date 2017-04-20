@@ -18,7 +18,6 @@ public class IoTClient {
 	
 
 	public AWSIotMqttClient awsIotClient;
-	private String tableName;
 	
 	public IoTClient(String filename) throws AWSIotException {
         initClient(filename);

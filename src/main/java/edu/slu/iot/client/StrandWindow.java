@@ -22,7 +22,9 @@ import java.util.Scanner;
 
 import edu.slu.iot.IoTClient;
 import edu.slu.iot.client.Strand;
+import edu.slu.iot.data.DaqState;
 import edu.slu.iot.data.Sample;
+import edu.slu.iot.data.StateSource;
 
 import javax.swing.JFileChooser;
 import javax.swing.JTextField;
@@ -53,11 +55,12 @@ import javax.swing.JCheckBox;
 import com.github.lgooddatepicker.components.*;
 import com.github.lgooddatepicker.components.DateTimePicker;
 import com.github.lgooddatepicker.components.TimePickerSettings.TimeIncrement;
+import javax.swing.JFormattedTextField;
 
 public class StrandWindow {
 
-	private Strand currentStrand;
 	private StrandListener sListener;
+	private DaqState stateSyncObject;
 	private File configFile = null;
 	private File writeFile = null;
 	private IoTClient iotClient;
@@ -67,11 +70,17 @@ public class StrandWindow {
 	
 	private JFrame frame;
 	private JTextField topicField;
+	private JFormattedTextField gainField;
+	private JFormattedTextField frequencyField;
 	private JButton connectButton;
+	private JButton updateStateButton;
 	private JButton allPastDataButton;
 	private JButton rangePastDataButton;
 	private JCheckBox scrollingCheckBox;
 	private JTextPane connectionStatus;
+	private JTextPane topicStatus;
+	private JTextPane gainStatus;
+	private JTextPane frequencyStatus;
 	
 	static private AmazonDynamoDB dynamoDB;
 
@@ -103,7 +112,8 @@ public class StrandWindow {
 	 * Create the application.
 	 */
 	public StrandWindow() {
-		initialize();
+		initialize(); //TODO: put thingName in config and simplify constructor calls real-daq
+		stateSyncObject = new StateSource<DaqState>(iotClient, "real-daq", DaqState.class).getState();
 	}
 
 	/**
@@ -111,19 +121,89 @@ public class StrandWindow {
 	 */
 	private void initialize() {
 		frame = new JFrame();
-		frame.setBounds(100, 100, 559, 350);
+		frame.setBounds(100, 100, 600, 425);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.getContentPane().setLayout(new MigLayout("", "[157.00px,grow][91px,grow][grow][grow]", "[25.00px][][8.00px,grow][][][grow][1.00][27.00,grow][grow]"));
+		frame.getContentPane().setLayout(new MigLayout("", "[132.00px,grow][48.00px][114.00:104.00][74.00,grow]", "[25.00px][][8.00px,grow][][grow][grow][grow][][19.00][][grow][][1.00][27.00,grow][grow]"));
 		
 		JTextPane txtpnChooseAConfiguration = new JTextPane();
 		txtpnChooseAConfiguration.setBackground(SystemColor.control);
 		txtpnChooseAConfiguration.setText("Choose a configuration file (.conf)");
 		frame.getContentPane().add(txtpnChooseAConfiguration, "cell 0 0,alignx left,aligny center");
 		
+		connectButton = new JButton("Connect");
+		connectButton.setEnabled(false);
+		frame.getContentPane().add(connectButton, "cell 1 2,growx,aligny center");
+		
+		
+		connectionStatus = new JTextPane();
+		connectionStatus.setBackground(SystemColor.control);
+		connectionStatus.setText("Status: Not Connected");
+		frame.getContentPane().add(connectionStatus, "cell 2 2,alignx center,aligny center");
+		
+		JSeparator secondSeparator = new JSeparator();
+		frame.getContentPane().add(secondSeparator, "cell 0 3 4 1,growx");
+		
+		JTextPane txtpnChangeDeviceState = new JTextPane();
+		txtpnChangeDeviceState.setBackground(SystemColor.menu);
+		txtpnChangeDeviceState.setText("Change device state");
+		frame.getContentPane().add(txtpnChangeDeviceState, "cell 0 4,grow");
+		
+		JTextPane txtpnTopic = new JTextPane();
+		txtpnTopic.setBackground(SystemColor.menu);
+		txtpnTopic.setText("Topic:");
+		frame.getContentPane().add(txtpnTopic, "cell 1 4,grow");
+		
+		topicField = new JTextField();
+		frame.getContentPane().add(topicField, "cell 2 4,alignx left,aligny center");
+		topicField.setColumns(10);
+		
+		topicStatus = new JTextPane();
+		topicStatus.setText("Current topic: ");
+		topicStatus.setBackground(SystemColor.menu);
+		frame.getContentPane().add(topicStatus, "cell 3 4,grow");
+		
+		updateStateButton = new JButton("Update");
+		updateListener();
+		frame.getContentPane().add(updateStateButton, "cell 0 5,growx,aligny center");
+		
+		JTextPane txtpnGain = new JTextPane();
+		txtpnGain.setBackground(SystemColor.menu);
+		txtpnGain.setText("Gain:");
+		frame.getContentPane().add(txtpnGain, "cell 1 5,grow");
+		
+		gainField = new JFormattedTextField();
+		gainField.setValue(new Double(0.75));
+		gainField.setColumns(10);
+		frame.getContentPane().add(gainField, "cell 2 5,alignx left,aligny center");
+		
+		gainStatus = new JTextPane();
+		gainStatus.setText("Current gain: 0.75");
+		gainStatus.setBackground(SystemColor.menu);
+		frame.getContentPane().add(gainStatus, "cell 3 5,grow");
+		
+		JTextPane txtpnFrequency = new JTextPane();
+		txtpnFrequency.setBackground(SystemColor.menu);
+		txtpnFrequency.setText("Frequency:");
+		frame.getContentPane().add(txtpnFrequency, "cell 1 6,grow");
+		
+		frequencyField = new JFormattedTextField();
+		frequencyField.setValue(new Double(25000));
+		frequencyField.setColumns(10);
+		frame.getContentPane().add(frequencyField, "cell 2 6,alignx left,aligny center");
+		
+		frequencyStatus = new JTextPane();
+		frequencyStatus.setText("Current frequency: 25kHz");
+		frequencyStatus.setBackground(SystemColor.menu);
+		frame.getContentPane().add(frequencyStatus, "cell 3 6,grow");
+		
+		
+		JSeparator thirdSeparator = new JSeparator();
+		frame.getContentPane().add(thirdSeparator, "cell 0 8 4 1,grow");
+		
 		JTextPane pastDataTextBox = new JTextPane();
 		pastDataTextBox.setBackground(SystemColor.menu);
 		pastDataTextBox.setText("Start time:");
-		frame.getContentPane().add(pastDataTextBox, "cell 0 4,alignx left,aligny center");
+		frame.getContentPane().add(pastDataTextBox, "cell 0 9,alignx left,aligny center");
 		
 		JButton btnBrowse = new JButton("Browse...");
 		btnBrowse.addMouseListener(new MouseAdapter() {
@@ -143,44 +223,23 @@ public class StrandWindow {
 		});
 		frame.getContentPane().add(btnBrowse, "cell 1 0,growx,aligny center");
 		
-		
-		connectionStatus = new JTextPane();
-		connectionStatus.setBackground(SystemColor.control);
-		connectionStatus.setText("Status: Not Connected");
-		frame.getContentPane().add(connectionStatus, "cell 2 0,alignx center,aligny center");
-		
 		JSeparator firstSeparator = new JSeparator();
 		frame.getContentPane().add(firstSeparator, "cell 0 1 4 1,grow");
 		
-		topicField = new JTextField();
-		frame.getContentPane().add(topicField, "cell 1 2,growx,aligny center");
-		topicField.setColumns(10);
-		
 		JTextPane txtpnEnterTheTopic = new JTextPane();
 		txtpnEnterTheTopic.setBackground(SystemColor.control);
-		txtpnEnterTheTopic.setText("Enter the session name");
+		txtpnEnterTheTopic.setText("Connect to a device");
 		frame.getContentPane().add(txtpnEnterTheTopic, "cell 0 2,alignx left,aligny center");
-		
-		connectButton = new JButton("Connect to session");
-		connectButton.setEnabled(false);
-		frame.getContentPane().add(connectButton, "cell 2 2,growx,aligny center");
-		
-		scrollingCheckBox = new JCheckBox("Scroll to Bottom");
-		frame.getContentPane().add(scrollingCheckBox, "cell 3 2,growx,aligny center");
-		scrollingCheckBox.setSelected(true);
-		
-		JSeparator secondSeparator = new JSeparator();
-		frame.getContentPane().add(secondSeparator, "cell 0 3 4 1,growx");
 		
 		TimePickerSettings timeSettings1 = new TimePickerSettings();
 		timeSettings1.setInitialTimeToNow();
 		timeSettings1.generatePotentialMenuTimes(TimeIncrement.FiveMinutes, null, null);
 		DatePickerSettings dateSettings1 = new DatePickerSettings();
 		DateTimePicker startDateTimePicker = new DateTimePicker(dateSettings1, timeSettings1);
-		frame.getContentPane().add(startDateTimePicker, "cell 1 4 2 1,grow");
+		frame.getContentPane().add(startDateTimePicker, "cell 1 9 2 1,alignx left,growy");
 		
 		allPastDataButton = new JButton("Add all past data");
-		frame.getContentPane().add(allPastDataButton, "cell 3 4,growx,aligny center");
+		frame.getContentPane().add(allPastDataButton, "cell 3 9,growx,aligny center");
 		allPastDataButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {				
 				long startTime = Long.MIN_VALUE;
@@ -222,26 +281,25 @@ public class StrandWindow {
 		JTextPane txtpnEndTime = new JTextPane();
 		txtpnEndTime.setBackground(SystemColor.menu);
 		txtpnEndTime.setText("End time:");
-		frame.getContentPane().add(txtpnEndTime, "cell 0 5,grow");
+		frame.getContentPane().add(txtpnEndTime, "cell 0 10,grow");
 		
 		TimePickerSettings timeSettings2 = new TimePickerSettings();
 		timeSettings2.setInitialTimeToNow();
 		timeSettings2.generatePotentialMenuTimes(TimeIncrement.FiveMinutes, null, null);
 		DatePickerSettings dateSettings2 = new DatePickerSettings();
 		DateTimePicker stopDateTimePicker = new DateTimePicker(dateSettings2, timeSettings2);
-		frame.getContentPane().add(stopDateTimePicker, "cell 1 5 2 1,grow");
+		frame.getContentPane().add(stopDateTimePicker, "cell 1 10 2 1,alignx left,growy");
 		
 		rangePastDataButton = new JButton("Add range of past data");
-		frame.getContentPane().add(rangePastDataButton, "cell 3 5");
+		frame.getContentPane().add(rangePastDataButton, "cell 3 10");
 		
-		
-		JSeparator thirdSeparator = new JSeparator();
-		frame.getContentPane().add(thirdSeparator, "cell 0 6 4 1,grow");
+		JSeparator fourthSeparator = new JSeparator();
+		frame.getContentPane().add(fourthSeparator, "cell 0 11 4 1,grow");
 		
 		JTextPane txtpnChooseAFile = new JTextPane();
 		txtpnChooseAFile.setText("Choose or create a file to write to");
 		txtpnChooseAFile.setBackground(SystemColor.menu);
-		frame.getContentPane().add(txtpnChooseAFile, "cell 0 7,growx,aligny center");
+		frame.getContentPane().add(txtpnChooseAFile, "cell 0 13,growx,aligny center");
 		JButton writeButton = new JButton("Write to file");
 		writeButton.addMouseListener(new MouseAdapter() {
 			@Override
@@ -277,7 +335,7 @@ public class StrandWindow {
 			}
 		});
 		writeButton.setEnabled(false);
-		frame.getContentPane().add(writeButton, "cell 2 7,growx,aligny center");
+		frame.getContentPane().add(writeButton, "cell 2 13,growx,aligny center");
 		
 		JButton writePathButton = new JButton("Find file...");
 		writePathButton.addMouseListener(new MouseAdapter() {
@@ -294,10 +352,14 @@ public class StrandWindow {
 				}
 			}
 		});
-		frame.getContentPane().add(writePathButton, "cell 1 7,growx,aligny center");
+		frame.getContentPane().add(writePathButton, "cell 1 13,growx,aligny center");
+		
+		scrollingCheckBox = new JCheckBox("Scroll to Bottom");
+		frame.getContentPane().add(scrollingCheckBox, "cell 3 13,growx,aligny center");
+		scrollingCheckBox.setSelected(true);
 		
 		JScrollPane scrollPane = new JScrollPane();
-		frame.getContentPane().add(scrollPane, "cell 0 8 4 1,grow");
+		frame.getContentPane().add(scrollPane, "cell 0 14 4 1,grow");
 		
 		listView = new JList(listModel);
 		scrollPane.setViewportView(listView);
@@ -309,29 +371,61 @@ public class StrandWindow {
 			public void actionPerformed(ActionEvent arg0) {
 					if (iotConnected) {
 						try {
-							iotClient.unsubscribe(sListener, 1000);
-						} catch (AWSIotException | AWSIotTimeoutException te) {
-							te.printStackTrace();
+							iotClient.disconnect();
+						} catch (AWSIotException e) {
+							e.printStackTrace();
 						}
 						iotConnected = false;
-				        connectButton.setText("Connect to session");
+				        connectButton.setText("Connect");
 				        connectionStatus.setText("Status: Not Connected");
 					}
 					else {
 						try {
-							//currentStrand =  new Strand(topicField.getText(), configFile);
 							iotClient = new IoTClient(configFile.getPath());
-							sListener = new StrandListener(topicField.getText(), AWSIotQos.QOS0, StrandWindow.this);
-					        iotClient.subscribe(sListener);
+							//sListener = new StrandListener(topicField.getText(), AWSIotQos.QOS0, StrandWindow.this);
+					        //iotClient.subscribe(sListener);
 					        listModel.clearList();
-					        
+					        iotConnected = true;
+							connectionStatus.setText("Status: Connected");
+						    connectButton.setText("Stop");
 						} catch (AWSIotException e) {
 							e.printStackTrace();
 						}
-						iotConnected = true;
-						connectionStatus.setText("Status: Connected");
-					    connectButton.setText("Stop");
 					}
+			}
+		});
+	}
+	
+	public void updateListener() {
+		updateStateButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				String topic = null;
+				Double gain = null;
+				Double freq = null;
+				if (!topicField.getText().equals("")) { //update topic
+					topic = topicField.getText();
+					sListener = new StrandListener(topic, AWSIotQos.QOS0, StrandWindow.this);
+					try {
+						iotClient.subscribe(sListener);
+						listModel.clearList();
+						topicStatus.setText(topicField.getText());
+						topicField.setText("");
+					} catch (AWSIotException e) {
+						e.printStackTrace(); //TODO: fix all of these catch blocks to do something sensible
+					}
+				}
+
+				if (!gainField.getText().equals("")) { //update gain
+					gain = (Double)gainField.getValue();
+					gainStatus.setText(gainField.getText());
+					gainField.setText("");
+				}
+				if (!frequencyField.getText().equals("")) { //update frequency
+					freq = (Double)frequencyField.getValue();
+					frequencyStatus.setText(frequencyField.getText());
+					frequencyField.setText("");
+				}
+				stateSyncObject.update(topic, gain, freq);
 			}
 		});
 	}
