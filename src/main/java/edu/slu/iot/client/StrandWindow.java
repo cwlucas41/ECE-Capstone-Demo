@@ -5,6 +5,7 @@ import java.awt.EventQueue;
 import javax.swing.JFrame;
 import javax.swing.JTextPane;
 import javax.swing.UIManager;
+import javax.swing.text.NumberFormatter;
 import javax.swing.JButton;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -14,6 +15,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -112,8 +114,7 @@ public class StrandWindow {
 	 * Create the application.
 	 */
 	public StrandWindow() {
-		initialize(); //TODO: put thingName in config and simplify constructor calls real-daq
-		stateSyncObject = new StateSource<DaqState>(iotClient, "real-daq", DaqState.class).getState();
+		initialize(); 
 	}
 
 	/**
@@ -164,15 +165,16 @@ public class StrandWindow {
 		
 		updateStateButton = new JButton("Update");
 		updateListener();
+	    updateStateButton.setEnabled(false);
 		frame.getContentPane().add(updateStateButton, "cell 0 5,growx,aligny center");
 		
 		JTextPane txtpnGain = new JTextPane();
 		txtpnGain.setBackground(SystemColor.menu);
 		txtpnGain.setText("Gain:");
 		frame.getContentPane().add(txtpnGain, "cell 1 5,grow");
-		
-		gainField = new JFormattedTextField();
-		gainField.setValue(new Double(0.75));
+
+		NumberFormatter gainFormat = new NumberFormatter(new DecimalFormat("#0.0000"));
+		gainField = new JFormattedTextField(gainFormat);
 		gainField.setColumns(10);
 		frame.getContentPane().add(gainField, "cell 2 5,alignx left,aligny center");
 		
@@ -185,14 +187,14 @@ public class StrandWindow {
 		txtpnFrequency.setBackground(SystemColor.menu);
 		txtpnFrequency.setText("Frequency:");
 		frame.getContentPane().add(txtpnFrequency, "cell 1 6,grow");
-		
-		frequencyField = new JFormattedTextField();
-		frequencyField.setValue(new Double(25000));
+
+		NumberFormatter frequencyFormat = new NumberFormatter(new DecimalFormat("#00000.00"));
+		frequencyField = new JFormattedTextField(frequencyFormat);
 		frequencyField.setColumns(10);
 		frame.getContentPane().add(frequencyField, "cell 2 6,alignx left,aligny center");
 		
 		frequencyStatus = new JTextPane();
-		frequencyStatus.setText("Current frequency: 25kHz");
+		frequencyStatus.setText("Current frequency: 25 kHz");
 		frequencyStatus.setBackground(SystemColor.menu);
 		frame.getContentPane().add(frequencyStatus, "cell 3 6,grow");
 		
@@ -291,7 +293,8 @@ public class StrandWindow {
 		frame.getContentPane().add(stopDateTimePicker, "cell 1 10 2 1,alignx left,growy");
 		
 		rangePastDataButton = new JButton("Add range of past data");
-		frame.getContentPane().add(rangePastDataButton, "cell 3 10");
+		rangePastDataButton.setEnabled(false);
+		frame.getContentPane().add(rangePastDataButton, "cell 3 10,growx,aligny center");
 		
 		JSeparator fourthSeparator = new JSeparator();
 		frame.getContentPane().add(fourthSeparator, "cell 0 11 4 1,grow");
@@ -378,16 +381,17 @@ public class StrandWindow {
 						iotConnected = false;
 				        connectButton.setText("Connect");
 				        connectionStatus.setText("Status: Not Connected");
+					    updateStateButton.setEnabled(false);
 					}
 					else {
 						try {
 							iotClient = new IoTClient(configFile.getPath());
-							//sListener = new StrandListener(topicField.getText(), AWSIotQos.QOS0, StrandWindow.this);
-					        //iotClient.subscribe(sListener);
 					        listModel.clearList();
+							stateSyncObject = new StateSource<DaqState>(iotClient, "real-daq", DaqState.class).getState();//TODO: put thingName in config and simplify constructor calls real-daq
 					        iotConnected = true;
 							connectionStatus.setText("Status: Connected");
 						    connectButton.setText("Stop");
+						    updateStateButton.setEnabled(true);
 						} catch (AWSIotException e) {
 							e.printStackTrace();
 						}
@@ -408,7 +412,7 @@ public class StrandWindow {
 					try {
 						iotClient.subscribe(sListener);
 						listModel.clearList();
-						topicStatus.setText(topicField.getText());
+						topicStatus.setText("Current topic: " + topicField.getText());
 						topicField.setText("");
 					} catch (AWSIotException e) {
 						e.printStackTrace(); //TODO: fix all of these catch blocks to do something sensible
@@ -416,15 +420,16 @@ public class StrandWindow {
 				}
 
 				if (!gainField.getText().equals("")) { //update gain
-					gain = (Double)gainField.getValue();
-					gainStatus.setText(gainField.getText());
+					gain = Double.parseDouble(gainField.getText());
+					gainStatus.setText("Current gain: " + gain.toString());
 					gainField.setText("");
 				}
 				if (!frequencyField.getText().equals("")) { //update frequency
-					freq = (Double)frequencyField.getValue();
-					frequencyStatus.setText(frequencyField.getText());
+					freq = Double.parseDouble(frequencyField.getText());
+					frequencyStatus.setText("Current frequency: " + freq.toString() + " Hz");
 					frequencyField.setText("");
 				}
+				
 				stateSyncObject.update(topic, gain, freq);
 			}
 		});
