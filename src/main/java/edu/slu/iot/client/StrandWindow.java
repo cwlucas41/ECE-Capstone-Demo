@@ -5,7 +5,10 @@ import java.awt.EventQueue;
 import javax.swing.JFrame;
 import javax.swing.JTextPane;
 import javax.swing.UIManager;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.NumberFormatter;
+import javax.swing.text.PlainDocument;
 import javax.swing.JButton;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -153,8 +156,9 @@ public class StrandWindow {
 		txtpnTopic.setBackground(SystemColor.menu);
 		txtpnTopic.setText("Topic:");
 		frame.getContentPane().add(txtpnTopic, "cell 1 4,grow");
-		
+	
 		topicField = new JTextField();
+		topicField.setDocument(new JTextFieldLimiter(100)); //limit length to 100 characters
 		frame.getContentPane().add(topicField, "cell 2 4,alignx left,aligny center");
 		topicField.setColumns(10);
 		
@@ -420,12 +424,12 @@ public class StrandWindow {
 				}
 
 				if (!gainField.getText().equals("")) { //update gain
-					gain = Double.parseDouble(gainField.getText());
+					gain = Math.abs(Double.parseDouble(gainField.getText()));
 					gainStatus.setText("Current gain: " + gain.toString());
 					gainField.setText("");
 				}
 				if (!frequencyField.getText().equals("")) { //update frequency
-					freq = Double.parseDouble(frequencyField.getText());
+					freq = Math.abs(Double.parseDouble(frequencyField.getText()));
 					frequencyStatus.setText("Current frequency: " + freq.toString() + " Hz");
 					frequencyField.setText("");
 				}
