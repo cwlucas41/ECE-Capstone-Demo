@@ -8,10 +8,10 @@ import edu.slu.iot.IoTClient;
 public class PublishSample {
 	
 	public static void main(String args[]) throws InterruptedException, AWSIotException, AWSIotTimeoutException {
+   
+		IoTClient client = new IoTClient("/home/debian/ECE-Capstone-Demo/Certificate1/conf.txt");
     	
-		IoTClient client = new IoTClient("/home/debian/ECE_Capstone_Networking/Certificate1/conf.txt");
-    	
-		client.publish(new DaqPublisher("RealDaq", AWSIotQos.QOS0, "DAQ"));
+		client.publish(new DaqPublisher(client, "RealDaq", AWSIotQos.QOS0, "DAQ"));
 
     }
 }

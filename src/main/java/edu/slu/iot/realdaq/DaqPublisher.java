@@ -24,9 +24,7 @@ public class DaqPublisher extends Publisher {
   private String sessionID;
   private String deviceID = "defaultDeviceID";
   private static final Gson gson = new Gson();
-  private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-  private final AdcReader reader = new AdcReader();
-  public AtomicInteger c = new AtomicInteger(0);
+
   public DaqPublisher(IoTClient client, String topic, AWSIotQos qos, String sessionID) {
     super(client, topic, qos);
     this.sessionID = sessionID;
@@ -35,7 +33,7 @@ public class DaqPublisher extends Publisher {
   @Override
   public void run() {
     try {
-      Process p = Runtime.getRuntime().exec("../../../../../c/ECE_Capstone_ADC/reader");
+      Process p = Runtime.getRuntime().exec("../../../../../c/ECE_Capstone_ADC/libpruio-0.2/src/c_examples/reader");
       BufferedReader in = 
         new BufferedReader(new InputStreamReader(p.getInputStream()));
 
@@ -56,7 +54,6 @@ public class DaqPublisher extends Publisher {
 
       //NOT HADNLING SHIT
     }
-    System.err.println("FINAL: " + c.intValue());
   }
 
   private class NonBlockingPublishListener extends AWSIotMessage {
