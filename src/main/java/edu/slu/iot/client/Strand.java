@@ -18,6 +18,6 @@ class Strand {
 		/*configurationFile = configFile;
 		topicString = topic;
 		client = new IoTClient(configurationFile.getPath());
-        client.subscribe(new StrandListener(topicString, AWSIotQos.QOS1));*/
+        client.subscribe(new StrandListener(topicString, AWSIotQos.QOS0));*/
     }
 }

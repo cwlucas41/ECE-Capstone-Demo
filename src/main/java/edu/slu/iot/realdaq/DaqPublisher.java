@@ -14,7 +14,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
+import edu.slu.iot.IoTClient;
 import edu.slu.iot.Publisher;
+import edu.slu.iot.data.GsonSerializer;
+import edu.slu.iot.data.Sample;
 
 public class DaqPublisher extends Publisher {
 
@@ -24,8 +27,8 @@ public class DaqPublisher extends Publisher {
   private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
   private final AdcReader reader = new AdcReader();
   public AtomicInteger c = new AtomicInteger(0);
-  public DaqPublisher(String topic, AWSIotQos qos, String sessionID) {
-    super(topic, qos);
+  public DaqPublisher(IoTClient client, String topic, AWSIotQos qos, String sessionID) {
+    super(client, topic, qos);
     this.sessionID = sessionID;
   }
 
@@ -48,7 +51,6 @@ public class DaqPublisher extends Publisher {
         Thread.sleep(1000);
       }catch(InterruptedException e){
 
-        //NOT HADNLING SHIT
       }
     }catch(IOException e){
 
@@ -63,12 +65,12 @@ public class DaqPublisher extends Publisher {
 
     public NonBlockingPublishListener(String topic, AWSIotQos qos, String payload) {
       super(topic, qos, payload);
-      sample = gson.fromJson(getStringPayload(), Sample.class);
+      sample = GsonSerializer.deserialize(getStringPayload(), Sample.class);
     }
 
     @Override
     public void onSuccess() {
-      System.out.println(System.currentTimeMillis() + ": >>> " + sample);
+      System.out.println(System.currentTimeMillis() + ": >>> " + sample.serialize());
     }
 
     @Override
@@ -76,14 +78,13 @@ public class DaqPublisher extends Publisher {
 
       System.out.println(this.errorCode + " " + this.errorMessage);
       System.out.println(System.currentTimeMillis() + ": publish failed for " + sample);
+
     }
 
     @Override
     public void onTimeout() {
-      System.out.println(System.currentTimeMillis() + ": publish timeout for " + sample);
+      System.out.println(System.currentTimeMillis() + ": publish timeout for " + sample.serialize());
     }
 
   }
 }
-
-

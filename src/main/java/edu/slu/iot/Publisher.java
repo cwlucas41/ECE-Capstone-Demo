@@ -8,15 +8,17 @@ public abstract class Publisher implements Runnable {
 	
 	public String topic;
 	public AWSIotQos qos;
+	private IoTClient client;
 	
-	public Publisher(String topic, AWSIotQos qos) {
+	public Publisher(IoTClient client, String topic, AWSIotQos qos) {
 		this.topic = topic;
 		this.qos = qos;
+		this.client = client;
 	}
 	
 	public void publish(AWSIotMessage message) {
         try {
-        	IoTClient.awsIotClient.publish(message);
+        	client.publish(message);
         } catch (AWSIotException e) {
             System.out.println(System.currentTimeMillis() + ": publish failed for " + message.getStringPayload());
         }
