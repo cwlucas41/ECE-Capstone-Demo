@@ -12,9 +12,9 @@ public class StateSource<T extends State> {
 	private T state;
 	private AWSIotDevice device;
 	
-	public StateSource(IoTClient client, String thingName, Class<T> clazz) {
+	public StateSource(IoTClient client, Class<T> clazz) {
 		
-		this.device = new AWSIotDevice(thingName);
+		this.device = new AWSIotDevice(client.getThingName());
 		try {
 			client.attach(device);
 		} catch (AWSIotException e1) {
