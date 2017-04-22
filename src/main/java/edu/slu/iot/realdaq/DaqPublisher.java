@@ -27,11 +27,15 @@ public class DaqPublisher extends Publisher {
 		try {
 			while (sampleStream.ready()) {
 				// get line
-				String[] line = sampleStream.readLine().split(" ");
+				String line = sampleStream.readLine();
+
+        System.out.println("line");
+
+				String[] fields = line.split(" ");
 				
 				// parse line
-				float value = (float) Integer.parseInt(line[1]);
-				long timeStamp = Long.parseLong(line[0].split(":")[1]);
+				float value = (float) Integer.parseInt(fields[1]);
+				long timeStamp = Long.parseLong(fields[0].split(":")[1]);
 				
 				// publish sample
 				Sample s = new Sample(deviceID, topic, timeStamp, value );
