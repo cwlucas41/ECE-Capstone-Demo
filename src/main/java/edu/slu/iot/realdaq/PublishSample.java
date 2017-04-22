@@ -15,12 +15,12 @@ import edu.slu.iot.data.StateSink;
 
 public class PublishSample {
 	
-	private static final String adcReader = "/home/debian/ECE-Capstone-Demo/src/main/c/ECE_Capstone/reader";
+	private static final String adcReader = "src/main/c/ECE_Capstone/reader";
 	private static Process adcReaderProcess = null;
 	
 	public static void main(String args[]) throws InterruptedException, AWSIotException, AWSIotTimeoutException {
    
-		IoTClient client = new IoTClient("/home/debian/ECE-Capstone-Demo/Certificate1/conf.txt");
+		IoTClient client = new IoTClient("Certificate1/conf.txt");
     	
 		new StateSink<DaqState>(client, DaqState.class, new StateListener() {
 			  
