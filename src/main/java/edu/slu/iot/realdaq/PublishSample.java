@@ -1,5 +1,6 @@
 package edu.slu.iot.realdaq;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
@@ -15,7 +16,7 @@ import edu.slu.iot.data.StateSink;
 
 public class PublishSample {
 	
-	private static final String adcReader = "src/main/c/ECE_Capstone/reader";
+	private static final String adcReader = new File("src/main/c/ECE_Capstone/reader").getAbsolutePath();
 	private static Process adcReaderProcess = null;
 	
 	public static void main(String args[]) throws InterruptedException, AWSIotException, AWSIotTimeoutException {
