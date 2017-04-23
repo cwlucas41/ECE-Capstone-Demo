@@ -15,10 +15,14 @@ public class DaqPublisher extends Publisher {
 
   private String deviceID = "defaultDeviceID";
   private BufferedReader sampleStream;
+  private long periodInMillis;
   
-  public DaqPublisher(IoTClient client, String topic, AWSIotQos qos, BufferedReader sampleStream) {
+  public DaqPublisher(IoTClient client, String topic, AWSIotQos qos, BufferedReader sampleStream, double freq) {
     super(client, topic, qos);
     this.sampleStream = sampleStream;
+    
+    
+    periodInMillis = (long) (1/ ((long) freq)) * 1000;
   }
   
   @Override
@@ -28,7 +32,7 @@ public class DaqPublisher extends Publisher {
       int i = 0;
       while (!sampleStream.ready()) {
         System.out.println("no");
-        Thread.sleep(100);
+        Thread.sleep(periodInMillis);
         i++;
         if (i > 3) {
           throw new IllegalStateException("the ADC is not generating samples to read");
