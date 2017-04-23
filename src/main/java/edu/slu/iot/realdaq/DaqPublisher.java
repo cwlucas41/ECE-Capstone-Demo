@@ -25,12 +25,21 @@ public class DaqPublisher extends Publisher {
   public void run() {		  
 		
 		try {
+      int i = 0;
+      while (!sampleStream.ready()) {
+        System.out.println("no");
+        Thread.sleep(100);
+        i++;
+        if (i > 3) {
+          throw new IllegalStateException("the ADC is not generating samples to read");
+        }
+      } 
+
+      System.out.println("yes");
+
 			while (sampleStream.ready()) {
 				// get line
 				String line = sampleStream.readLine();
-
-				System.out.println("line");
-
 				String[] fields = line.split(" ");
 				
 				// parse line
@@ -42,7 +51,7 @@ public class DaqPublisher extends Publisher {
 				AWSIotMessage message = new NonBlockingPublishListener(topic, qos, s.serialize());
 				publish(message);
 			}
-		} catch(IOException e) {
+		} catch(InterruptedException | IOException e) {
 			e.printStackTrace();
 		} 
   }

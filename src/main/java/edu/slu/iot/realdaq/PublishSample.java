@@ -42,7 +42,7 @@ public class PublishSample {
 					
 					// create new process
 					try {
-						adcReaderProcess = Runtime.getRuntime().exec(adcReader);
+						adcReaderProcess = Runtime.getRuntime().exec(adcReader + " " + daqState.getFrequency());
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
