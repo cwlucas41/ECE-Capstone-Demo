@@ -29,26 +29,24 @@ public class DaqPublisher extends Publisher {
   @Override
   public void run() {		  
 		
-			while (p.isAlive()) {
-				try {
-					while (sampleStream.ready()) {
-						// get line
-						String line = sampleStream.readLine();
-						String[] fields = line.split(" ");
-						
-						// parse line
-						float value = (float) Integer.parseInt(fields[1]);
-						long timeStamp = Long.parseLong(fields[0].split(":")[1]);
-						
-						// publish sample
-						Sample s = new Sample(deviceID, topic, timeStamp, value );
-						AWSIotMessage message = new NonBlockingPublishListener(topic, qos, s.serialize());
-						publish(message);
-					}
-			} catch(IOException e) {
-				e.printStackTrace();
+		try {
+			while (p.isAlive() && sampleStream.ready()) {
+				// get line
+				String line = sampleStream.readLine();
+				String[] fields = line.split(" ");
+				
+				// parse line
+				float value = (float) Integer.parseInt(fields[1]);
+				long timeStamp = Long.parseLong(fields[0].split(":")[1]);
+				
+				// publish sample
+				Sample s = new Sample(deviceID, topic, timeStamp, value );
+				AWSIotMessage message = new NonBlockingPublishListener(topic, qos, s.serialize());
+				publish(message);
 			}
-		} 
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
   }
 
   private class NonBlockingPublishListener extends AWSIotMessage {
