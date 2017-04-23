@@ -66,9 +66,9 @@ public class IoTClient {
     	File config = new File(filename);
     	Map<String, String> configMap = new HashMap<String, String>();
     	
-    	Scanner sc = null;
-		try {
-			sc = new Scanner(config);
+		try (
+			Scanner sc = new Scanner(config);
+    ) {
 
 	    	while (sc.hasNextLine()) {
 	    		String line = sc.nextLine();
@@ -82,8 +82,6 @@ public class IoTClient {
 	    	}	    	
 		} catch (FileNotFoundException e) {
 			throw new IllegalArgumentException("bad filename for config file");
-		} finally {
-			sc.close();
 		}
     	
         String clientEndpoint = configMap.get("clientEndpoint");
