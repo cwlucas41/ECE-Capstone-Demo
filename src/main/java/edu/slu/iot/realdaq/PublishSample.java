@@ -47,14 +47,11 @@ public class PublishSample {
 						adcReaderProcess = new ProcessBuilder(adcReader, daqState.getFrequency().toString()).start();
 					} catch (IOException e) {
 						e.printStackTrace();
-					}
-					
-					// get stream to publish
-					BufferedReader in = new BufferedReader(new InputStreamReader(adcReaderProcess.getInputStream()));
+					}					
 					
 					// start publishing
 					try {
-						client.publish(new DaqPublisher(client, daqState.getTopic(), AWSIotQos.QOS0, in, daqState.getFrequency()));
+						client.publish(new DaqPublisher(client, daqState.getTopic(), AWSIotQos.QOS0, adcReader, daqState.getFrequency()));
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}

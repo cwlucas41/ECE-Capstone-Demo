@@ -6,6 +6,8 @@ import com.amazonaws.services.iot.client.AWSIotQos;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+
 import edu.slu.iot.IoTClient;
 import edu.slu.iot.Publisher;
 import edu.slu.iot.data.GsonSerializer;
@@ -14,12 +16,14 @@ import edu.slu.iot.data.Sample;
 public class DaqPublisher extends Publisher {
 
   private String deviceID = "defaultDeviceID";
-  private BufferedReader sampleStream;
+  private Process p;
   private long periodInMillis;
+  private BufferedReader sampleStream;
   
-  public DaqPublisher(IoTClient client, String topic, AWSIotQos qos, BufferedReader sampleStream, double freq) {
+  public DaqPublisher(IoTClient client, String topic, AWSIotQos qos, Process p, double freq) {
     super(client, topic, qos);
-    this.sampleStream = sampleStream;
+    this.p = p;
+    sampleStream = new BufferedReader(new InputStreamReader(p.getInputStream()));
     
     
     periodInMillis = (long) (1/ ((long) freq)) * 1000;
@@ -29,30 +33,25 @@ public class DaqPublisher extends Publisher {
   @Override
   public void run() {		  
 		
-		try {
-      while (!sampleStream.ready()) {
-        System.out.println("waiting");
-        Thread.sleep(100);
-      } 
-
-      System.out.println("yes");
-
-			while (sampleStream.ready()) {
-				// get line
-				String line = sampleStream.readLine();
-				String[] fields = line.split(" ");
-				
-				// parse line
-				float value = (float) Integer.parseInt(fields[1]);
-				long timeStamp = Long.parseLong(fields[0].split(":")[1]);
-				
-				// publish sample
-				Sample s = new Sample(deviceID, topic, timeStamp, value );
-				AWSIotMessage message = new NonBlockingPublishListener(topic, qos, s.serialize());
-				publish(message);
+			while (p.isAlive()) {
+				try {
+					while (sampleStream.ready()) {
+						// get line
+						String line = sampleStream.readLine();
+						String[] fields = line.split(" ");
+						
+						// parse line
+						float value = (float) Integer.parseInt(fields[1]);
+						long timeStamp = Long.parseLong(fields[0].split(":")[1]);
+						
+						// publish sample
+						Sample s = new Sample(deviceID, topic, timeStamp, value );
+						AWSIotMessage message = new NonBlockingPublishListener(topic, qos, s.serialize());
+						publish(message);
+					}
+			} catch(IOException e) {
+				e.printStackTrace();
 			}
-		} catch(InterruptedException | IOException e) {
-			e.printStackTrace();
 		} 
   }
 
