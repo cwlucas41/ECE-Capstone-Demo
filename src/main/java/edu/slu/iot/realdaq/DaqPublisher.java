@@ -17,17 +17,13 @@ public class DaqPublisher extends Publisher {
 
   private String deviceID = "defaultDeviceID";
   private Process p;
-  private long periodInMillis;
   private BufferedReader sampleStream;
   
-  public DaqPublisher(IoTClient client, String topic, AWSIotQos qos, Process p, double freq) {
+  public DaqPublisher(IoTClient client, String topic, AWSIotQos qos, Process p) {
     super(client, topic, qos);
     this.p = p;
     sampleStream = new BufferedReader(new InputStreamReader(p.getInputStream()));
     
-    
-    periodInMillis = (long) (1/ ((long) freq)) * 1000;
-    System.out.println("wait time: " + periodInMillis);
   }
   
   @Override

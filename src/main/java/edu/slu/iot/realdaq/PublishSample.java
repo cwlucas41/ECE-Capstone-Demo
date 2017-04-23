@@ -51,7 +51,7 @@ public class PublishSample {
 					
 					// start publishing
 					try {
-						client.publish(new DaqPublisher(client, daqState.getTopic(), AWSIotQos.QOS0, adcReader, daqState.getFrequency()));
+						client.publish(new DaqPublisher(client, daqState.getTopic(), AWSIotQos.QOS0, adcReaderProcess));
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
