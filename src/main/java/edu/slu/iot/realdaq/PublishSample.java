@@ -22,6 +22,7 @@ public class PublishSample {
 	public static void main(String args[]) throws InterruptedException, AWSIotException, AWSIotTimeoutException {
    
 		IoTClient client = new IoTClient("Certificate1/conf.txt");
+		
     	
 		new StateSink<DaqState>(client, DaqState.class, new StateListener() {
 			  
@@ -52,6 +53,12 @@ public class PublishSample {
 					// start publishing
 					try {
 						client.publish(new DaqPublisher(client, daqState.getTopic(), AWSIotQos.QOS0, in));
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					
+					try {
+						adcReaderProcess.waitFor();
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
