@@ -132,6 +132,7 @@ public class StrandWindow {
 		frame.getContentPane().setLayout(new MigLayout("", "[132.00px,grow][48.00px][114.00:104.00][74.00,grow]", "[25.00px,center][][8.00px,grow,center][][grow,center][grow,center][grow,center][][19.00][center][grow,center][][1.00][27.00,grow,center][grow]"));
 		
 		JTextPane txtpnChooseAConfiguration = new JTextPane();
+		txtpnChooseAConfiguration.setEditable(false);
 		txtpnChooseAConfiguration.setBackground(SystemColor.control);
 		txtpnChooseAConfiguration.setText("Choose a configuration file (.conf)");
 		frame.getContentPane().add(txtpnChooseAConfiguration, "cell 0 0,alignx left,aligny center");
@@ -142,6 +143,7 @@ public class StrandWindow {
 		
 		
 		connectionStatus = new JTextPane();
+		connectionStatus.setEditable(false);
 		connectionStatus.setBackground(SystemColor.control);
 		connectionStatus.setText("Status: Not Connected");
 		frame.getContentPane().add(connectionStatus, "cell 2 2,alignx center,aligny center");
@@ -150,11 +152,13 @@ public class StrandWindow {
 		frame.getContentPane().add(secondSeparator, "cell 0 3 4 1,growx,aligny center");
 		
 		JTextPane txtpnChangeDeviceState = new JTextPane();
+		txtpnChangeDeviceState.setEditable(false);
 		txtpnChangeDeviceState.setBackground(SystemColor.menu);
 		txtpnChangeDeviceState.setText("Change device state");
 		frame.getContentPane().add(txtpnChangeDeviceState, "cell 0 4,growx,aligny center");
 		
 		JTextPane txtpnTopic = new JTextPane();
+		txtpnTopic.setEditable(false);
 		txtpnTopic.setBackground(SystemColor.menu);
 		txtpnTopic.setText("Topic:");
 		frame.getContentPane().add(txtpnTopic, "cell 1 4,growx,aligny center");
@@ -165,6 +169,7 @@ public class StrandWindow {
 		topicField.setColumns(10);
 		
 		topicStatus = new JTextPane();
+		topicStatus.setEditable(false);
 		topicStatus.setText("Current topic: ");
 		topicStatus.setBackground(SystemColor.menu);
 		frame.getContentPane().add(topicStatus, "cell 3 4,growx,aligny center");
@@ -175,6 +180,7 @@ public class StrandWindow {
 		frame.getContentPane().add(updateStateButton, "cell 0 5,growx,aligny center");
 		
 		JTextPane txtpnGain = new JTextPane();
+		txtpnGain.setEditable(false);
 		txtpnGain.setBackground(SystemColor.menu);
 		txtpnGain.setText("Gain:");
 		frame.getContentPane().add(txtpnGain, "cell 1 5,growx,aligny center");
@@ -185,11 +191,13 @@ public class StrandWindow {
 		frame.getContentPane().add(gainField, "cell 2 5,alignx left,aligny center");
 		
 		gainStatus = new JTextPane();
+		gainStatus.setEditable(false);
 		gainStatus.setText("Current gain: 0.75");
 		gainStatus.setBackground(SystemColor.menu);
 		frame.getContentPane().add(gainStatus, "cell 3 5,growx,aligny center");
 		
 		JTextPane txtpnFrequency = new JTextPane();
+		txtpnFrequency.setEditable(false);
 		txtpnFrequency.setBackground(SystemColor.menu);
 		txtpnFrequency.setText("Frequency:");
 		frame.getContentPane().add(txtpnFrequency, "cell 1 6,growx,aligny center");
@@ -200,6 +208,7 @@ public class StrandWindow {
 		frame.getContentPane().add(frequencyField, "cell 2 6,alignx left,aligny center");
 		
 		frequencyStatus = new JTextPane();
+		frequencyStatus.setEditable(false);
 		frequencyStatus.setText("Current frequency: 25 kHz");
 		frequencyStatus.setBackground(SystemColor.menu);
 		frame.getContentPane().add(frequencyStatus, "cell 3 6,growx,aligny center");
@@ -209,6 +218,7 @@ public class StrandWindow {
 		frame.getContentPane().add(thirdSeparator, "cell 0 8 4 1,growx,aligny center");
 		
 		JTextPane pastDataTextBox = new JTextPane();
+		pastDataTextBox.setEditable(false);
 		pastDataTextBox.setBackground(SystemColor.menu);
 		pastDataTextBox.setText("Start time:");
 		frame.getContentPane().add(pastDataTextBox, "cell 0 9,alignx left,aligny center");
@@ -236,6 +246,7 @@ public class StrandWindow {
 		frame.getContentPane().add(firstSeparator, "cell 0 1 4 1,growx,aligny center");
 		
 		JTextPane txtpnEnterTheTopic = new JTextPane();
+		txtpnEnterTheTopic.setEditable(false);
 		txtpnEnterTheTopic.setBackground(SystemColor.control);
 		txtpnEnterTheTopic.setText("Connect to a device");
 		frame.getContentPane().add(txtpnEnterTheTopic, "cell 0 2,alignx left,aligny center");
@@ -257,6 +268,7 @@ public class StrandWindow {
 		allPastDataButton.setEnabled(false);
 		
 		JTextPane txtpnEndTime = new JTextPane();
+		txtpnEndTime.setEditable(false);
 		txtpnEndTime.setBackground(SystemColor.menu);
 		txtpnEndTime.setText("End time:");
 		frame.getContentPane().add(txtpnEndTime, "cell 0 10,growx,aligny center");
@@ -287,6 +299,7 @@ public class StrandWindow {
 		frame.getContentPane().add(fourthSeparator, "cell 0 11 4 1,growx,aligny center");
 		
 		JTextPane txtpnChooseAFile = new JTextPane();
+		txtpnChooseAFile.setEditable(false);
 		txtpnChooseAFile.setText("Choose or create a file to write to");
 		txtpnChooseAFile.setBackground(SystemColor.menu);
 		frame.getContentPane().add(txtpnChooseAFile, "cell 0 13,growx,aligny center");
