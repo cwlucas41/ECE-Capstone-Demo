@@ -455,7 +455,7 @@ public class StrandWindow {
 					frequencyField.setText("");
 				}
 				
-				stateSyncObject.update(topic, gain, freq);
+				stateSyncObject.update(topic, freq, gain);
 			}
 		});
 	}
