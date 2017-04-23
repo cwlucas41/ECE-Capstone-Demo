@@ -23,20 +23,16 @@ public class DaqPublisher extends Publisher {
     
     
     periodInMillis = (long) (1/ ((long) freq)) * 1000;
+    System.out.println("wait time: " + periodInMillis);
   }
   
   @Override
   public void run() {		  
 		
 		try {
-      int i = 0;
       while (!sampleStream.ready()) {
-        System.out.println("no");
-        Thread.sleep(periodInMillis);
-        i++;
-        if (i > 3) {
-          throw new IllegalStateException("the ADC is not generating samples to read");
-        }
+        System.out.println("waiting");
+        Thread.sleep(100);
       } 
 
       System.out.println("yes");

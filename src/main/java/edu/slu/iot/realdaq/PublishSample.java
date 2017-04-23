@@ -3,6 +3,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.ProcessBuilder;
 
 import com.amazonaws.services.iot.client.AWSIotException;
 import com.amazonaws.services.iot.client.AWSIotQos;
@@ -16,7 +17,7 @@ import edu.slu.iot.data.StateSink;
 
 public class PublishSample {
 	
-	private static final String adcReader = new File("src/main/c/ECE_Capstone/reader").getAbsolutePath();
+	private static final String adcReader = "src/main/c/ECE_Capstone/reader";
 	private static Process adcReaderProcess = null;
 	
 	public static void main(String args[]) throws InterruptedException, AWSIotException, AWSIotTimeoutException {
@@ -42,7 +43,8 @@ public class PublishSample {
 					
 					// create new process
 					try {
-						adcReaderProcess = Runtime.getRuntime().exec(adcReader + " " + daqState.getFrequency());
+						// adcReaderProcess = new ProcessBuilder(adcReader).start();
+						adcReaderProcess = new ProcessBuilder(adcReader, daqState.getFrequency().toString()).start();
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -52,7 +54,7 @@ public class PublishSample {
 					
 					// start publishing
 					try {
-						client.publish(new DaqPublisher(client, daqState.getTopic(), AWSIotQos.QOS0, in));
+						client.publish(new DaqPublisher(client, daqState.getTopic(), AWSIotQos.QOS0, in, daqState.getFrequency()));
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
