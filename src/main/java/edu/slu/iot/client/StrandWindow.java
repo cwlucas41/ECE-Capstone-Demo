@@ -19,6 +19,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.text.DecimalFormat;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -75,6 +76,7 @@ public class StrandWindow {
 	
 	private JFrame frame;
 	private JTextField topicField;
+	private String topicString;
 	private JFormattedTextField gainField;
 	private JFormattedTextField frequencyField;
 	private JButton connectButton;
@@ -248,38 +250,7 @@ public class StrandWindow {
 		frame.getContentPane().add(allPastDataButton, "cell 3 9,growx,aligny center");
 		allPastDataButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {				
-				long startTime = Long.MIN_VALUE;
-				QuerySpec spec;
-				String sessionID = topicField.getText();
-				if (sessionID == null) {
-					System.out.println("Please enter your session ID.");
-				}
-				else {
-					if (listModel.getSize() != 0) { //if we have any data from this session so far, only query data from before it began
-						startTime = listModel.getElementAt(0).getTimestamp();
-						spec = new QuerySpec()
-							.withRangeKeyCondition(new RangeKeyCondition("timestamp").lt(startTime))
-							.withHashKey("sessionID", sessionID);
-					} else {
-						spec = new QuerySpec()
-							.withRangeKeyCondition(new RangeKeyCondition("timestamp").gt(startTime))
-							.withHashKey("sessionID", sessionID);
-					}
-					dynamoDB = AmazonDynamoDBClientBuilder.standard()
-							.withRegion(Regions.US_WEST_2)
-							.withCredentials(new ProfileCredentialsProvider("Certificate1/ddbconf.txt", "default"))
-							.build();
-					Table table = new Table(dynamoDB, getTableName());
-					ItemCollection<QueryOutcome> items = table.query(spec);
-					Iterator<Item> iterator = items.iterator();
-					Item item = null;
-					List<Sample> writeToView = new ArrayList<Sample>();
-					while (iterator.hasNext()) { //make sure this doesn't interrupt rendering too much
-					    item = iterator.next();
-					    writeToView.add(new Sample(item));
-					}
-					listModel.addBulkToList(writeToView);
-				}
+				loadHistoricalData();
 			}
 		});
 		allPastDataButton.setEnabled(false);
@@ -298,6 +269,16 @@ public class StrandWindow {
 		
 		rangePastDataButton = new JButton("Add range of past data");
 		rangePastDataButton.setEnabled(false);
+		rangePastDataButton.addMouseListener(new MouseAdapter() {
+				@Override
+				public void mouseClicked(MouseEvent arg0) {
+					ZoneId zoneId = ZoneId.systemDefault();
+					long start = startDateTimePicker.getDateTimePermissive().atZone(zoneId).toEpochSecond();
+					long end = startDateTimePicker.getDateTimePermissive().atZone(zoneId).toEpochSecond();
+					if ((startDateTimePicker.getDatePicker().getDate() != null) && (stopDateTimePicker.getDatePicker().getDate() != null))
+						loadHistoricalData(start, end);
+				}
+		});
 		frame.getContentPane().add(rangePastDataButton, "cell 3 10,growx,aligny center");
 		
 		JSeparator fourthSeparator = new JSeparator();
@@ -330,7 +311,10 @@ public class StrandWindow {
 						Sample sample = null;
 						for (int i = 0; i < listModel.getSize(); i++) {
 							sample = listModel.getElementAt(i);
-							bwriter.write(Long.toString(sample.getTimestamp()) + ", " + Float.toString(sample.getValue()));
+							long timeStamp = sample.getTimestamp();
+							long seconds = timeStamp >> 32;
+							long nanoseconds = timeStamp & 0x0000FFFF;
+							bwriter.write(Long.toString(seconds) + "." + nanoseconds + ", " + Float.toString(sample.getValue()));
 							bwriter.newLine();
 						}
 						bwriter.close();
@@ -371,6 +355,39 @@ public class StrandWindow {
 		listView = new JList(listModel);
 		scrollPane.setViewportView(listView);
 		
+	}
+	
+	public void loadHistoricalData() {
+		loadHistoricalData(Long.MIN_VALUE, Long.MAX_VALUE);
+	}
+	
+	public void loadHistoricalData(long startTime, long endTime) {
+		QuerySpec spec;
+		if (topicString == null) {
+			System.out.println("Please enter your session ID.");
+		}
+		else {
+			if (listModel.getSize() != 0) { //if we have any data from this session so far, only query data from before it began
+				endTime = listModel.getElementAt(0).getTimestamp();
+			}
+			spec = new QuerySpec()
+				.withRangeKeyCondition(new RangeKeyCondition("timestamp").between(startTime, endTime))
+				.withHashKey("sessionID", topicString);
+			dynamoDB = AmazonDynamoDBClientBuilder.standard()
+					.withRegion(Regions.US_WEST_2)
+					.withCredentials(new ProfileCredentialsProvider("Certificate1/ddbconf.txt", "default"))
+					.build();
+			Table table = new Table(dynamoDB, getTableName());
+			ItemCollection<QueryOutcome> items = table.query(spec);
+			Iterator<Item> iterator = items.iterator();
+			Item item = null;
+			List<Sample> writeToView = new ArrayList<Sample>();
+			while (iterator.hasNext()) { //make sure this doesn't interrupt rendering too much
+			    item = iterator.next();
+			    writeToView.add(new Sample(item));
+			}
+			listModel.addBulkToList(writeToView);
+		}
 	}
 	
 	public void connectionListener() {
@@ -417,6 +434,7 @@ public class StrandWindow {
 						iotClient.subscribe(sListener);
 						listModel.clearList();
 						topicStatus.setText("Current topic: " + topicField.getText());
+						topicString = topicField.getText();
 						topicField.setText("");
 					} catch (AWSIotException e) {
 						e.printStackTrace(); //TODO: fix all of these catch blocks to do something sensible
