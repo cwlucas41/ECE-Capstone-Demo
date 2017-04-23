@@ -32,19 +32,28 @@ public class PublishSample {
 				if (state instanceof DaqState) {
 					
 					DaqState daqState = (DaqState) state;
+					System.out.println("state changed to: " + daqState.serialize());
 					
 					// destroy an existing process if it exists
 					if (adcReaderProcess != null) {
 						adcReaderProcess.destroy();
+            System.out.println("destroy requested");
+
+	          while (adcReaderProcess.isAlive()) {
+              try {Thread.sleep(100);}
+              catch (Exception e) { e.printStackTrace(); }
+            }
+            System.out.println("destroy complete");
 					}
-					
+
+				
 					// CONFIGURE DIGITAL POTS HERE
-					System.out.println("state changed to: " + daqState.serialize());
 					
 					// create new process
 					try {
 						// adcReaderProcess = new ProcessBuilder(adcReader).start();
 						adcReaderProcess = new ProcessBuilder(adcReader, daqState.getFrequency().toString()).start();
+            System.out.println("adc process started");
 					} catch (IOException e) {
 						e.printStackTrace();
 					}					
@@ -52,12 +61,14 @@ public class PublishSample {
 					// start publishing
 					try {
 						client.publish(new DaqPublisher(client, daqState.getTopic(), AWSIotQos.QOS0, adcReaderProcess));
+            System.out.println("publisher started");
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
 					
 					try {
 						adcReaderProcess.waitFor();
+            System.out.println("waiting for adc process");
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
