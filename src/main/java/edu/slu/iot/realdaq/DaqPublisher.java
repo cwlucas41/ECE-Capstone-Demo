@@ -30,8 +30,8 @@ public class DaqPublisher extends Publisher {
 		s = new Scanner(p.getInputStream());
 		this.gain = gain;
 		this.actualState = actualState;
-		t = new Thread(new FrequencyUpdater());
-		t.start();
+//		t = new Thread(new FrequencyUpdater());
+//		t.start();
 	}
 
 	@Override
@@ -54,11 +54,11 @@ public class DaqPublisher extends Publisher {
 			long ns = Long.parseLong(times[1]);
 			long timeStamp = (s << 32) + ns;
 			
-			double currTime = Double.parseDouble(s + "." + ns);
-			if (prevTime != -1) {
-				periodEWMA = alpha * (currTime - prevTime) + (1 - alpha) * periodEWMA;
-			}
-			prevTime = currTime;
+//			double currTime = Double.parseDouble(s + "." + ns);
+//			if (prevTime != -1) {
+//				periodEWMA = alpha * (currTime - prevTime) + (1 - alpha) * periodEWMA;
+//			}
+//			prevTime = currTime;
 			
 			// publish sample
 			Sample sample = new Sample(deviceID, topic, timeStamp, value );
@@ -66,12 +66,12 @@ public class DaqPublisher extends Publisher {
 			publish(message);
 		}
 		
-		alive = false;
-		try {
-			t.join();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+//		alive = false;
+//		try {
+//			t.join();
+//		} catch (InterruptedException e) {
+//			e.printStackTrace();
+//		}
 	}
 	
 	private class FrequencyUpdater implements Runnable {
