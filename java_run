@@ -1,1 +1,0 @@
-java -cp target/mock-daq-0.0.jar edu.slu.iot.realdaq.PublishSample
