@@ -54,6 +54,11 @@ def setFreq(desiredFreq):
   i2c_command = "i2cset -y 1 {} {} {}".format(hex(address),hex(r3),hex(valueR3))
   subprocess.call(i2c_command.split())
 
+def printUsage():
+  print "Usage: python adjustableResistors.py [flag] [value]"
+  print "   [flag] i:   run in interactive shell mode (no value needed)"
+  print "   [flag] g:   adjust gain to [value]"
+  print "   [flag] f:   adjust sample frequency cutoff to [value]"
 
 def main():
   for line in r1andr2file:
@@ -67,7 +72,10 @@ def main():
 
   r1andr2file.close()
   r3file.close()
-  if len(sys.argv) == 1:   
+  if len(sys.argv) == 1: 
+    printUsage()
+  
+  elif sys.argv[1] == 'i': 
     #interactive mode
     while True:
       command = raw_input("enter a command (g for gain or f for sample frequency) followed by a desired value with a space. e.g. g 1.2\n")
