@@ -85,8 +85,10 @@ public class DaqPublisher extends Publisher {
 					e.printStackTrace();
 				}
 				
-				// actualState.setFrequency(1/periodEWMA);
-				System.out.println(1/periodEWMA);
+				double freq = 1/periodEWMA;
+				
+				actualState.setFrequency(freq);
+				System.out.println(freq);
 			}
 		}
 		
@@ -103,7 +105,7 @@ public class DaqPublisher extends Publisher {
 
 		@Override
 		public void onSuccess() {
-			System.out.println("daq: >>> " + sample.serialize());
+			// System.out.println("daq: >>> " + sample.serialize());
 		}
 
 		@Override
