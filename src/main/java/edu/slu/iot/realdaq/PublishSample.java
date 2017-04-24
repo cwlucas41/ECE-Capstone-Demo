@@ -57,7 +57,8 @@ public class PublishSample {
 					double actualGain = targetState.getGain();
 					double actualFreq = targetState.getFrequency();
 					
-					actualState.update(targetState.getTopic(), actualFreq, actualGain);
+					// problem with this line, commented out for now
+					// actualState.update(targetState.getTopic(), actualFreq, actualGain);
 					
 					if (targetState.getFrequency() > 0) {
 						// create new process
@@ -71,7 +72,6 @@ public class PublishSample {
 						// start publishing for adc
 						publishThread = new Thread(new DaqPublisher(client, targetState.getTopic(), AWSIotQos.QOS0, adcReaderProcess, targetState.getGain()));
 						publishThread.start();
-						
 						System.err.println("publishing started");
 					} else {
 						System.err.println("publishing stopped");
