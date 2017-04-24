@@ -47,7 +47,7 @@ public class StateSource<T extends State> {
 	}
 	
 	public StateSource(IoTClient client, Class<T> clazz) {
-		this(client, client.getThingName(), clazz);
+		this(client, client.getTargetThingName(), clazz);
 	}
 	
 	public T getState() {

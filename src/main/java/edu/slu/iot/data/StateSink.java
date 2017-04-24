@@ -59,7 +59,7 @@ public class StateSink<T extends State> {
 	}
 	
 	public StateSink(IoTClient client, Class<T> clazz, StateListener listener) {
-		this(client, client.getThingName(), clazz, listener);
+		this(client, client.getTargetThingName(), clazz, listener);
 	}	
 	
 	private void updateStateAndReport(String jsonState) {
