@@ -16,8 +16,13 @@ import edu.slu.iot.data.StateSource;
 public class PublishSample {
 
 	private static final String adcReader = "src/main/c/ECE_Capstone/reader";
-	private static Process adcReaderProcess = null;
-	private static Thread publishThread = null;
+	private static final String i2cController = "src/main/java/edu/slu/iot/realdaq/adjustableResistors.py";
+  private static final String gainToken = "g";
+  private static final String freqToken = "f";
+
+  private static Process adcReaderProcess = null;
+	private static Process i2cControllerProcess = null;
+  private static Thread publishThread = null;
 	private static DaqState actualState;
 
 	public static void main(String args[]) throws InterruptedException, AWSIotException, AWSIotTimeoutException {
@@ -57,13 +62,48 @@ public class PublishSample {
 					double actualGain = targetState.getGain();
 					double actualFreq = targetState.getFrequency();
 					
+				  System.out.println("Changing Digital pots");
+					actualState.update(targetState.getTopic(), targetState.getFrequency(), targetState.getGain());
+				  System.out.println("Changing Digital pots");
+				/*	
+          if (i2cControllerProcess != null) {
+						i2cControllerProcess.destroy();
+
+						try {
+							// wait for destruction
+							i2cControllerProcess.waitFor();					
+
+							// wait for publishing to stop
+							publishThread.join();
+							
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+
+					}
+        */
+          try{
+            //adjust variable resistors 
+				    System.out.println("Changing Digital pots");
+            i2cControllerProcess = new ProcessBuilder(i2cController,freqToken ,targetState.getFrequency().toString()).start();
+				    i2cControllerProcess.waitFor();
+				    System.out.println("Freq set. Updating Gain");
+            i2cControllerProcess = new ProcessBuilder(i2cController,gainToken ,targetState.getGain().toString()).start();
+				    i2cControllerProcess.waitFor();
+				    System.out.println("Gain set. ");
+            System.out.println("Dpot update complete");
+          }catch(IOException | InterruptedException e ){
+            e.printStackTrace();
+          }
+          if (targetState.getFrequency() > 0) {
+					// problem with this line, commented out for now
+					// actualState.update(targetState.getTopic(), actualFreq, actualGain);
 					actualState.update(targetState.getTopic(), actualFreq, actualGain);
 					
-					if (targetState.getFrequency() > 0) {
 						// create new process
 						try {
 							// start new adc process with frequency
-							adcReaderProcess = new ProcessBuilder(adcReader, targetState.getFrequency().toString()).start();
+							adcReaderProcess= new ProcessBuilder(adcReader, targetState.getFrequency().toString()).start();
 						} catch (IOException e) {
 							e.printStackTrace();
 						}					
