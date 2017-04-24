@@ -35,7 +35,8 @@ public class DaqPublisher extends Publisher {
 			String[] fields = line.split(" ");
 
 			// parse line
-			float value = (float) Integer.parseInt(fields[1]);
+			float adcValue = (float) Integer.parseInt(fields[1]);
+			float value = adcValue * 1.8f / 65536f;
 			String[] times = fields[0].split(":");
 			long s = Long.parseLong(times[0]);
 			long ns = Long.parseLong(times[1]);
