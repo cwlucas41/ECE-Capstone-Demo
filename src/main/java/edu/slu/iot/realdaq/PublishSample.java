@@ -26,7 +26,6 @@ public class PublishSample {
 		
 		actualState = new StateSource<DaqState>(client, client.getActualThingName(), DaqState.class).getState();
 
-
 		new StateSink<DaqState>(client, client.getTargetThingName(), DaqState.class, new StateListener() {
 
 			@Override
@@ -84,7 +83,7 @@ public class PublishSample {
 
 		while (true) {
 			try {
-				Thread.sleep(1000);
+				Thread.sleep(100);
 			} catch (Exception e) { 
 				e.printStackTrace();
 			}
