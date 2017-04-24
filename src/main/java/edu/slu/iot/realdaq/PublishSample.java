@@ -37,19 +37,19 @@ public class PublishSample {
 						adcReaderProcess.destroy();
 						System.out.println("destroy requested");
 
-						
+
 						try {
-              adcReaderProcess.waitFor();					
-              System.out.println("process destroy complete");
+							adcReaderProcess.waitFor();					
+							System.out.println("process destroy complete");
 
 							publishThread.join();
-              System.out.println("Thread finished");
+							System.out.println("Thread finished");
 						} catch (InterruptedException e) {
 							e.printStackTrace();
 						}
-						
+
 					}
-					
+
 
 
 					// CONFIGURE DIGITAL POTS HERE
@@ -79,12 +79,12 @@ public class PublishSample {
 
 		});  
 
-    while (true) {
-      try {
-        Thread.sleep(1000);
-      } catch (Exception e) { 
-        e.printStackTrace();
-      }
-    }
-  }
+		while (true) {
+			try {
+				Thread.sleep(1000);
+			} catch (Exception e) { 
+				e.printStackTrace();
+			}
+		}
+	}
 }

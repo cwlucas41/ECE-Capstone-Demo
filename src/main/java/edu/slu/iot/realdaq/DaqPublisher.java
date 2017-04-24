@@ -15,67 +15,72 @@ import edu.slu.iot.data.Sample;
 
 public class DaqPublisher extends Publisher {
 
-  private String deviceID = "defaultDeviceID";
-  private Process p;
-  private BufferedReader sampleStream;
-  
-  public DaqPublisher(IoTClient client, String topic, AWSIotQos qos, Process p) {
-    super(client, topic, qos);
-    this.p = p;
-    sampleStream = new BufferedReader(new InputStreamReader(p.getInputStream()));
-    
-  }
-  
-  @Override
-  public void run() {		  
-		
+	private String deviceID = "defaultDeviceID";
+	private Process p;
+	private BufferedReader sampleStream;
+
+	public DaqPublisher(IoTClient client, String topic, AWSIotQos qos, Process p) {
+		super(client, topic, qos);
+		this.p = p;
+		sampleStream = new BufferedReader(new InputStreamReader(p.getInputStream()));
+
+	}
+
+	@Override
+	public void run() {	
+
+		System.out.println("publisher running");
+
 		try {
 			while (p.isAlive() && sampleStream.ready()) {
 				// get line
 				String line = sampleStream.readLine();
-        // System.out.println(line);
+				// System.out.println(line);
 				String[] fields = line.split(" ");
-				
+
 				// parse line
 				float value = (float) Integer.parseInt(fields[1]);
-				long timeStamp = Long.parseLong(fields[0].split(":")[1]);
-				
+				String[] times = fields[0].split(":");
+				long s = Long.parseLong(times[0]);
+				long ns = Long.parseLong(times[1]);
+				long timeStamp = (s << 32) + ns;
+
 				// publish sample
-				Sample s = new Sample(deviceID, topic, timeStamp, value );
-				AWSIotMessage message = new NonBlockingPublishListener(topic, qos, s.serialize());
+				Sample sample = new Sample(deviceID, topic, timeStamp, value );
+				AWSIotMessage message = new NonBlockingPublishListener(topic, qos, sample.serialize());
 				publish(message);
 			}
 		} catch(IOException e) {
 			e.printStackTrace();
 		}
-  }
+	}
 
-  private class NonBlockingPublishListener extends AWSIotMessage {
+	private class NonBlockingPublishListener extends AWSIotMessage {
 
-    Sample sample;
+		Sample sample;
 
-    public NonBlockingPublishListener(String topic, AWSIotQos qos, String payload) {
-      super(topic, qos, payload);
-      sample = GsonSerializer.deserialize(getStringPayload(), Sample.class);
-    }
+		public NonBlockingPublishListener(String topic, AWSIotQos qos, String payload) {
+			super(topic, qos, payload);
+			sample = GsonSerializer.deserialize(getStringPayload(), Sample.class);
+		}
 
-    @Override
-    public void onSuccess() {
-      System.out.println(System.currentTimeMillis() + ": >>> " + sample.serialize());
-    }
+		@Override
+		public void onSuccess() {
+			System.out.println(System.currentTimeMillis() + ": >>> " + sample.serialize());
+		}
 
-    @Override
-    public void onFailure() {
+		@Override
+		public void onFailure() {
 
-      System.out.println(this.errorCode + " " + this.errorMessage);
-      System.out.println(System.currentTimeMillis() + ": publish failed for " + sample);
+			System.out.println(this.errorCode + " " + this.errorMessage);
+			System.out.println(System.currentTimeMillis() + ": publish failed for " + sample);
 
-    }
+		}
 
-    @Override
-    public void onTimeout() {
-      System.out.println(System.currentTimeMillis() + ": publish timeout for " + sample.serialize());
-    }
+		@Override
+		public void onTimeout() {
+			System.out.println(System.currentTimeMillis() + ": publish timeout for " + sample.serialize());
+		}
 
-  }
+	}
 }
