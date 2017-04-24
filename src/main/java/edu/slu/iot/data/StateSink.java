@@ -64,7 +64,7 @@ public class StateSink<T extends State> {
 			newState = GsonSerializer.deserialize(jsonState, clazz);
 			state.update(newState); 
 			String reported = "{\"state\": {\"reported\":" + state.serialize() + "}}";			
-			device.update(new AWSIotMessage("", AWSIotQos.QOS1, reported), 500);
+			device.update(new AWSIotMessage("", AWSIotQos.QOS0, reported), 500);
 		} catch (AWSIotException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

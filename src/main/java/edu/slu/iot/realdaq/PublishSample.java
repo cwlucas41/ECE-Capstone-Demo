@@ -98,6 +98,7 @@ public class PublishSample {
           if (targetState.getFrequency() > 0) {
 					// problem with this line, commented out for now
 					// actualState.update(targetState.getTopic(), actualFreq, actualGain);
+					actualState.update(targetState.getTopic(), actualFreq, actualGain);
 					
 						// create new process
 						try {
