@@ -67,13 +67,6 @@ public class PublishSample {
 					publishThread = new Thread(new DaqPublisher(client, daqState.getTopic(), AWSIotQos.QOS0, adcReaderProcess));
 					publishThread.start();
 					System.out.println("publisher started");
-
-					// try {
-					// 	System.out.println("waiting for adc process");
-					// 	adcReaderProcess.waitFor();
-					// } catch (InterruptedException e) {
-					// 	e.printStackTrace();
-					// }
 				}
 			}
 
