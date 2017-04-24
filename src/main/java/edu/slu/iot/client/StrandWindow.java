@@ -9,6 +9,7 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.NumberFormatter;
 import javax.swing.text.PlainDocument;
+
 import javax.swing.JButton;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -73,6 +74,7 @@ public class StrandWindow {
 	private JList listView;
 	private AppendableView listModel = new AppendableView();
 	private boolean iotConnected = false;
+	private String currentFilePath;
 	
 	private JFrame frame;
 	private JTextField topicField;
@@ -83,6 +85,7 @@ public class StrandWindow {
 	private JButton updateStateButton;
 	private JButton allPastDataButton;
 	private JButton rangePastDataButton;
+	private JButton graphButton;
 	private JCheckBox scrollingCheckBox;
 	private JTextPane connectionStatus;
 	private JTextPane topicStatus;
@@ -129,7 +132,7 @@ public class StrandWindow {
 		frame = new JFrame();
 		frame.setBounds(100, 100, 600, 425);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.getContentPane().setLayout(new MigLayout("", "[132.00px,grow][48.00px][114.00:104.00][74.00,grow]", "[25.00px,center][][8.00px,grow,center][][grow,center][grow,center][grow,center][][19.00][center][grow,center][][1.00][27.00,grow,center][grow]"));
+		frame.getContentPane().setLayout(new MigLayout("", "[132.00px,grow][48.00px][114.00:104.00][74.00,grow]", "[25.00px,center][][8.00px,grow,center][][grow,center][grow,center][grow,center][][19.00][center][grow,center][][1.00][27.00,grow,center][][grow]"));
 		
 		JTextPane txtpnChooseAConfiguration = new JTextPane();
 		txtpnChooseAConfiguration.setEditable(false);
@@ -308,35 +311,7 @@ public class StrandWindow {
 			@Override
 			public void mouseClicked(MouseEvent arg0) {
 				if (writeFile != null) {
-					File target = new File(writeFile.getPath());
-					if (!target.exists())
-						try {
-							target.createNewFile();
-						} catch (IOException e) {
-							System.out.println("Could not create new file " + writeFile.getPath());
-							e.printStackTrace();
-						}
-					FileOutputStream fstream = null;
-					try {fstream = new FileOutputStream(target);}
-					catch (FileNotFoundException fnfe) {
-						System.out.println("File not found exception in file write");
-					}
-					BufferedWriter bwriter = new BufferedWriter(new OutputStreamWriter(fstream));
-					try {
-						Sample sample = null;
-						for (int i = 0; i < listModel.getSize(); i++) {
-							sample = listModel.getElementAt(i);
-							long timeStamp = sample.getTimestamp();
-							long seconds = timeStamp >> 32;
-							long nanoseconds = timeStamp & 0x0000FFFF;
-							bwriter.write(Long.toString(seconds) + "." + nanoseconds + ", " + Float.toString(sample.getValue()));
-							bwriter.newLine();
-						}
-						bwriter.close();
-					}
-					catch (IOException ioe) {
-						System.out.println("IOException on file write");
-					}
+					writeToFile(writeFile.getPath());
 				}
 			}
 		});
@@ -355,6 +330,7 @@ public class StrandWindow {
 				if (chooseStatus == JFileChooser.APPROVE_OPTION) {
                     writeFile = writingFileChooser.getSelectedFile();
                     writeButton.setEnabled(true);
+                    graphButton.setEnabled(true);
 				}
 			}
 		});
@@ -364,12 +340,64 @@ public class StrandWindow {
 		frame.getContentPane().add(scrollingCheckBox, "cell 3 13,growx,aligny center");
 		scrollingCheckBox.setSelected(true);
 		
+		graphButton = new JButton("Graph...");
+		graphButton.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent arg0) {
+				pythonGraphing();
+			}
+		});
+		frame.getContentPane().add(graphButton, "cell 2 14,growx,aligny center");
+		
 		JScrollPane scrollPane = new JScrollPane();
-		frame.getContentPane().add(scrollPane, "cell 0 14 4 1,grow");
+		frame.getContentPane().add(scrollPane, "cell 0 15 4 1,grow");
 		
 		listView = new JList(listModel);
-		scrollPane.setViewportView(listView);
-		
+		scrollPane.setViewportView(listView);	
+	}
+	
+	public void pythonGraphing() {
+		writeToFile(currentFilePath);
+		try {
+			Runtime.getRuntime().exec("python graphinfScript.py" + currentFilePath);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void writeToFile(String filePath) {
+		currentFilePath = filePath;
+		File target = new File(filePath);
+		if (!target.exists())
+			try {
+				target.createNewFile();
+			} catch (IOException e) {
+				System.out.println("Could not create new file " + writeFile.getPath());
+				e.printStackTrace();
+			}
+		FileOutputStream fstream = null;
+		try {fstream = new FileOutputStream(target);}
+		catch (FileNotFoundException fnfe) {
+			System.out.println("File not found exception in file write");
+		}
+		BufferedWriter bwriter = new BufferedWriter(new OutputStreamWriter(fstream));
+		try {
+			Sample sample = null;
+			bwriter.write("time,voltage");
+			bwriter.newLine();
+			for (int i = 0; i < listModel.getSize(); i++) {
+				sample = listModel.getElementAt(i);
+				long timeStamp = sample.getTimestamp();
+				long seconds = timeStamp >> 32;
+				long nanoseconds = timeStamp & 0x0000FFFF;
+				bwriter.write(Long.toString(seconds) + "." + nanoseconds + "," + Float.toString(sample.getValue()));
+				bwriter.newLine();
+			}
+			bwriter.close();
+		}
+		catch (IOException ioe) {
+			System.out.println("IOException on file write");
+		}
 	}
 	
 	public void loadHistoricalData() {
