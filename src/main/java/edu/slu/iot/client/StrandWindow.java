@@ -194,7 +194,7 @@ public class StrandWindow {
 		
 		gainStatus = new JTextPane();
 		gainStatus.setEditable(false);
-		gainStatus.setText("Current gain: 0.75");
+		gainStatus.setText("Current gain: ");
 		gainStatus.setBackground(SystemColor.menu);
 		frame.getContentPane().add(gainStatus, "cell 3 5,growx,aligny center");
 		
@@ -211,7 +211,7 @@ public class StrandWindow {
 		
 		frequencyStatus = new JTextPane();
 		frequencyStatus.setEditable(false);
-		frequencyStatus.setText("Current frequency: 25 kHz");
+		frequencyStatus.setText("Current frequency: ");
 		frequencyStatus.setBackground(SystemColor.menu);
 		frame.getContentPane().add(frequencyStatus, "cell 3 6,growx,aligny center");
 		
@@ -240,6 +240,7 @@ public class StrandWindow {
                     allPastDataButton.setEnabled(true);
                     rangePastDataButton.setEnabled(true);
 				}
+				connectClient();
 			}
 		});
 		frame.getContentPane().add(btnBrowse, "cell 1 0,growx,aligny center");
@@ -380,8 +381,10 @@ public class StrandWindow {
 				long timeStamp = sample.getTimestamp();
 				long seconds = timeStamp >> 32;
 				long nanoseconds = timeStamp & 0x0000FFFF;
+				System.out.println(nanoseconds);
 				int nanoDigits = ((int) Math.log10(nanoseconds)) + 1; // need to add leading zeroes to nanosecond value
-				int leadingZeroes = 8 - nanoDigits;
+				System.out.println(nanoDigits);
+				int leadingZeroes = 9 - nanoDigits;
 				String zeroes = "";
 				for (int j = 0; j < leadingZeroes; j++) {
 					zeroes = zeroes + "0";
@@ -433,32 +436,36 @@ public class StrandWindow {
 	public void connectionListener() {
 		connectButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-					if (iotConnected) {
-						try {
-							iotClient.disconnect();
-						} catch (AWSIotException e) {
-							e.printStackTrace();
-						}
-						iotConnected = false;
-				        connectButton.setText("Connect");
-				        connectionStatus.setText("Status: Not Connected");
-					    updateStateButton.setEnabled(false);
-					}
-					else {
-						try {
-							iotClient = new IoTClient(configFile.getPath());
-					        listModel.clearList();
-							stateSyncObject = new StateSource<DaqState>(iotClient, iotClient.getTargetThingName(), DaqState.class).getState();
-					        iotConnected = true;
-							connectionStatus.setText("Status: Connected");
-						    connectButton.setText("Stop");
-						    updateStateButton.setEnabled(true);
-						} catch (AWSIotException e) {
-							e.printStackTrace();
-						}
-					}
+					connectClient();
 			}
 		});
+	}
+	
+	public void connectClient() {
+		if (iotConnected) {
+			try {
+				iotClient.disconnect();
+			} catch (AWSIotException e) {
+				e.printStackTrace();
+			}
+			iotConnected = false;
+	        connectButton.setText("Connect");
+	        connectionStatus.setText("Status: Not Connected");
+		    updateStateButton.setEnabled(false);
+		}
+		else {
+			try {
+				iotClient = new IoTClient(configFile.getPath());
+		        listModel.clearList();
+				stateSyncObject = new StateSource<DaqState>(iotClient, iotClient.getTargetThingName(), DaqState.class).getState();
+		        iotConnected = true;
+				connectionStatus.setText("Status: Connected");
+			    connectButton.setText("Stop");
+			    updateStateButton.setEnabled(true);
+			} catch (AWSIotException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	public void updateListener() {
