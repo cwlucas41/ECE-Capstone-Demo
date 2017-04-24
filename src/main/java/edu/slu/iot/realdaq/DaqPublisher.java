@@ -41,8 +41,6 @@ public class DaqPublisher extends Publisher {
 			long ns = Long.parseLong(times[1]);
 			long timeStamp = (s << 32) + ns;
 			
-			System.err.println(s + " " + ns + " -> " + timeStamp);
-
 			// publish sample
 			Sample sample = new Sample(deviceID, topic, timeStamp, value );
 			AWSIotMessage message = new NonBlockingPublishListener(topic, qos, sample.serialize());
@@ -61,14 +59,13 @@ public class DaqPublisher extends Publisher {
 
 		@Override
 		public void onSuccess() {
-			System.out.println(System.currentTimeMillis() + ": >>> " + sample.serialize());
+			System.out.println("daq: >>> " + sample.serialize());
 		}
 
 		@Override
 		public void onFailure() {
-
 			System.out.println(this.errorCode + " " + this.errorMessage);
-			System.out.println(System.currentTimeMillis() + ": publish failed for " + sample);
+			System.out.println(System.currentTimeMillis() + ": publish failed for " + sample.serialize());
 
 		}
 

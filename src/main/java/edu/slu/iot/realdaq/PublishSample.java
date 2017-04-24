@@ -42,6 +42,8 @@ public class PublishSample {
 
 							// wait for publishing to stop
 							publishThread.join();
+							
+							System.err.println("publishing stopped");
 						} catch (InterruptedException e) {
 							e.printStackTrace();
 						}
@@ -62,6 +64,10 @@ public class PublishSample {
 						// start publishing for adc
 						publishThread = new Thread(new DaqPublisher(client, daqState.getTopic(), AWSIotQos.QOS0, adcReaderProcess));
 						publishThread.start();
+						
+						System.err.println("publishing started");
+					} else {
+						System.err.println("publishing stopped");
 					}
 				}
 			}
