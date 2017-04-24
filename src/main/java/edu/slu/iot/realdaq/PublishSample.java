@@ -37,25 +37,17 @@ public class PublishSample {
 						adcReaderProcess.destroy();
 						System.out.println("destroy requested");
 
-						while (adcReaderProcess.isAlive()) {
-							try {
-								Thread.sleep(1000);
-								System.out.println("waiting for process kill");
-							} catch (Exception e) { 
-								e.printStackTrace();
-							}
-						}
-						
-						System.out.println("process destroy complete");
 						
 						try {
+              adcReaderProcess.waitFor();					
+              System.out.println("process destroy complete");
+
 							publishThread.join();
+              System.out.println("Thread finished");
 						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
 						
-						System.out.println("Thread finished");
 					}
 					
 
@@ -76,16 +68,23 @@ public class PublishSample {
 					publishThread.start();
 					System.out.println("publisher started");
 
-					try {
-						System.out.println("waiting for adc process");
-						adcReaderProcess.waitFor();
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
+					// try {
+					// 	System.out.println("waiting for adc process");
+					// 	adcReaderProcess.waitFor();
+					// } catch (InterruptedException e) {
+					// 	e.printStackTrace();
+					// }
 				}
 			}
 
 		});  
 
-	}
+    while (true) {
+      try {
+        Thread.sleep(1000);
+      } catch (Exception e) { 
+        e.printStackTrace();
+      }
+    }
+  }
 }
