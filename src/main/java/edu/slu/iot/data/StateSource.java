@@ -12,9 +12,9 @@ public class StateSource<T extends State> {
 	private T state;
 	private AWSIotDevice device;
 	
-	public StateSource(IoTClient client, Class<T> clazz) {
+	public StateSource(IoTClient client, String thingName, Class<T> clazz) {
 		
-		this.device = new AWSIotDevice(client.getThingName());
+		this.device = new AWSIotDevice(thingName);
 		try {
 			client.attach(device);
 		} catch (AWSIotException e1) {
@@ -32,7 +32,7 @@ public class StateSource<T extends State> {
 							try {
 								String desired = "{\"state\":{\"desired\":" + state.serialize() + "}}";
 								device.update(desired);
-								System.out.println("source changed to: " + desired);
+								System.out.println("source changed to: " + state.serialize());
 							} catch (AWSIotException e) {
 								e.printStackTrace();
 							}

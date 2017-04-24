@@ -452,7 +452,7 @@ public class StrandWindow {
 						try {
 							iotClient = new IoTClient(configFile.getPath());
 					        listModel.clearList();
-							stateSyncObject = new StateSource<DaqState>(iotClient, DaqState.class).getState();
+							stateSyncObject = new StateSource<DaqState>(iotClient, iotClient.getTargetThingName(), DaqState.class).getState();
 					        iotConnected = true;
 							connectionStatus.setText("Status: Connected");
 						    connectButton.setText("Stop");

@@ -18,7 +18,8 @@ public class IoTClient {
 	
 
 	public AWSIotMqttClient awsIotClient;
-	private String thingName;
+	private String targetThingName;
+	private String actualThingName;
 	
 	public IoTClient(String filename) throws AWSIotException {
         initClient(filename);
@@ -57,8 +58,12 @@ public class IoTClient {
 	    awsIotClient.unsubscribe(topic, timeout);
 	}
 	
-	public String getThingName() {
-		return thingName;
+	public String getTargetThingName() {
+		return targetThingName;
+	}
+	
+	public String getActualThingName() {
+		return actualThingName;
 	}
 	
     public void initClient(String filename) {
@@ -88,7 +93,8 @@ public class IoTClient {
         String clientId = configMap.get("clientId");
         String certificateFile = configMap.get("certificateFile");
         String privateKeyFile = configMap.get("privateKeyFile");
-        thingName = configMap.get("thingName");
+        targetThingName = configMap.get("targetThingName");
+        actualThingName = configMap.get("actualThingName");
                 
         if (clientEndpoint != null && clientId != null && certificateFile != null && privateKeyFile != null) {
         	KeyStorePasswordPair pair = SampleUtil.getKeyStorePasswordPair(certificateFile, privateKeyFile);
