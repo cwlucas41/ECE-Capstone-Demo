@@ -28,9 +28,9 @@ public class DaqPublisher extends Publisher {
 
 		System.out.println("publisher running");
 
-		while (s.hasNext()) {
+		while (s.hasNextLine()) {
 			// get line
-			String line = s.next();
+			String line = s.nextLine();
 			// System.out.println(line);
 			String[] fields = line.split(" ");
 
