@@ -23,13 +23,15 @@ public class DaqPublisher extends Publisher {
 	private boolean alive = true;
 	private volatile long reportInterval = 1000;
 	private DaqState actualState;
+	private Thread t;
 
 	public DaqPublisher(IoTClient client, String topic, AWSIotQos qos, Process p, double gain, DaqState actualState) {
 		super(client, topic, qos);
 		s = new Scanner(p.getInputStream());
 		this.gain = gain;
 		this.actualState = actualState;
-		new Thread(new FrequencyUpdater()).start();
+		t = new Thread(new FrequencyUpdater());
+		t.start();
 	}
 
 	@Override
@@ -65,6 +67,11 @@ public class DaqPublisher extends Publisher {
 		}
 		
 		alive = false;
+		try {
+			t.join();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	private class FrequencyUpdater implements Runnable {
