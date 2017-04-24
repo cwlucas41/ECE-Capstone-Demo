@@ -33,7 +33,7 @@ public class StateSource<T extends State> {
 						public <S extends State> void onStateChangeSucceded(S state) {
 							try {
 								String desired = "{\"state\":{\"desired\":" + state.serialize() + "}}";
-								device.update(new AWSIotMessage("", AWSIotQos.QOS1, desired), 1000);
+								device.update(new AWSIotMessage("", AWSIotQos.QOS1, desired), 500);
 								System.out.println("source changed to: " + state.serialize());
 							} catch (AWSIotException e) {
 								e.printStackTrace();
