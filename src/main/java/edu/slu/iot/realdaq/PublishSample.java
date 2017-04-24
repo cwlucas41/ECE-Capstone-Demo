@@ -7,35 +7,19 @@ import edu.slu.iot.IoTClient;
 
 public class PublishSample {
 	
-  private class Gain{
-    
-    public float gain;
-    public int hexcodeR1;
-    public int hexcodeR2;
-
-    Gain(float gain,int hexcodeR1,int hexcodeR2){
-      this.gain = gain;
-      this.hexcodeR1 = hexcodeR1;
-      this.hexcodeR2 = hexcodeR2;
-    
-    }
-  }
-
-  private class Frequency{
-    public float sampleFreq;
-    public int hexcode;
-
-    Frequency(float sampleFreq, int hexcode){
-      this.sampleFreq = sampleFreq;
-      this.hexcode = hexcode;
-    }
-  }
-
-
+  private final String I2C = "python adjustableResistors.py";
+  String args = " g 2.0"; //TODO placeholder
 	public static void main(String args[]) throws InterruptedException, AWSIotException, AWSIotTimeoutException {
+   
+
+    ProcessBuilder pb = new ProcessBuilder(I2C + args)
+    pb.inheritIO();
+    pb.director(new File("bin"));
+    pb.start();
+    
     
     //init 
-    Runtime.getRuntime.exec("python adjustableResistors.py");		
+    //Runtime.getRuntime().exec(I2C);		
     IoTClient client = new IoTClient("/home/debian/ECE-Capstone-Demo/Certificate1/conf.txt");
     
 
