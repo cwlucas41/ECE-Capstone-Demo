@@ -85,7 +85,6 @@ public class StrandWindow {
 	private JButton updateStateButton;
 	private JButton allPastDataButton;
 	private JButton rangePastDataButton;
-	private JButton graphButton;
 	private JCheckBox scrollingCheckBox;
 	private JTextPane connectionStatus;
 	private JTextPane topicStatus;
@@ -292,7 +291,7 @@ public class StrandWindow {
 						ZoneId zoneId = ZoneId.systemDefault();
 						long start = startDateTimePicker.getDateTimePermissive().atZone(zoneId).toEpochSecond();
 						long end = stopDateTimePicker.getDateTimePermissive().atZone(zoneId).toEpochSecond();
-						loadHistoricalData(start*1000, end*1000); //TODO: change when integration ready
+						loadHistoricalData(start << 32, end << 32);
 					}
 				}
 		});
@@ -312,6 +311,7 @@ public class StrandWindow {
 			public void mouseClicked(MouseEvent arg0) {
 				if (writeFile != null) {
 					writeToFile(writeFile.getPath());
+					pythonGraphing();
 				}
 			}
 		});
@@ -330,24 +330,14 @@ public class StrandWindow {
 				if (chooseStatus == JFileChooser.APPROVE_OPTION) {
                     writeFile = writingFileChooser.getSelectedFile();
                     writeButton.setEnabled(true);
-                    graphButton.setEnabled(true);
 				}
 			}
 		});
 		frame.getContentPane().add(writePathButton, "cell 1 13,growx,aligny center");
 		
-		scrollingCheckBox = new JCheckBox("Scroll to Bottom");
+		scrollingCheckBox = new JCheckBox("Scroll to Bottom"); //TODO: weird bug with this button?
 		frame.getContentPane().add(scrollingCheckBox, "cell 3 13,growx,aligny center");
 		scrollingCheckBox.setSelected(true);
-		
-		graphButton = new JButton("Graph...");
-		graphButton.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent arg0) {
-				pythonGraphing();
-			}
-		});
-		frame.getContentPane().add(graphButton, "cell 2 14,growx,aligny center");
 		
 		JScrollPane scrollPane = new JScrollPane();
 		frame.getContentPane().add(scrollPane, "cell 0 15 4 1,grow");
@@ -359,7 +349,7 @@ public class StrandWindow {
 	public void pythonGraphing() {
 		writeToFile(currentFilePath);
 		try {
-			Runtime.getRuntime().exec("python graphinfScript.py" + currentFilePath);
+			Runtime.getRuntime().exec("python graphingScript.py \"" + currentFilePath + "\"");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
