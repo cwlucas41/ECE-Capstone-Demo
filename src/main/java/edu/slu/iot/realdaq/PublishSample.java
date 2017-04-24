@@ -58,7 +58,7 @@ public class PublishSample {
 					double actualFreq = targetState.getFrequency();
 					
 					// problem with this line, commented out for now
-					// actualState.update(targetState.getTopic(), actualFreq, actualGain);
+					actualState.update(targetState.getTopic(), actualFreq, actualGain);
 					
 					if (targetState.getFrequency() > 0) {
 						// create new process
