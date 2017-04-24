@@ -16,11 +16,13 @@ public class DaqPublisher extends Publisher {
 	private String deviceID = "defaultDeviceID";
 	private Process p;
 	private Scanner s;
+	private double gain;
 
-	public DaqPublisher(IoTClient client, String topic, AWSIotQos qos, Process p) {
+	public DaqPublisher(IoTClient client, String topic, AWSIotQos qos, Process p, double gain) {
 		super(client, topic, qos);
 		this.p = p;
 		s = new Scanner(p.getInputStream());
+		this.gain = gain;
 	}
 
 	@Override
@@ -36,7 +38,8 @@ public class DaqPublisher extends Publisher {
 
 			// parse line
 			float adcValue = (float) Integer.parseInt(fields[1]);
-			float value = adcValue * 1.8f / 65536f;
+			float value = (float) (adcValue * 1.8f / 65536f / gain);
+			
 			String[] times = fields[0].split(":");
 			long s = Long.parseLong(times[0]);
 			long ns = Long.parseLong(times[1]);

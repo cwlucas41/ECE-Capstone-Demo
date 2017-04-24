@@ -62,7 +62,7 @@ public class PublishSample {
 						}					
 	
 						// start publishing for adc
-						publishThread = new Thread(new DaqPublisher(client, daqState.getTopic(), AWSIotQos.QOS0, adcReaderProcess));
+						publishThread = new Thread(new DaqPublisher(client, daqState.getTopic(), AWSIotQos.QOS0, adcReaderProcess, daqState.getGain()));
 						publishThread.start();
 						
 						System.err.println("publishing started");
