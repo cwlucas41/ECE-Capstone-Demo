@@ -96,6 +96,9 @@ public class PublishSample {
             e.printStackTrace();
           }
           if (targetState.getFrequency() > 0) {
+					// problem with this line, commented out for now
+					// actualState.update(targetState.getTopic(), actualFreq, actualGain);
+					
 						// create new process
 						try {
 							// start new adc process with frequency
@@ -107,7 +110,6 @@ public class PublishSample {
 						// start publishing for adc
 						publishThread = new Thread(new DaqPublisher(client, targetState.getTopic(), AWSIotQos.QOS0, adcReaderProcess, targetState.getGain()));
 						publishThread.start();
-						
 						System.err.println("publishing started");
 					} else {
 						System.err.println("publishing stopped");
