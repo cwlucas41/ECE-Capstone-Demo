@@ -33,6 +33,7 @@ public class DaqPublisher extends Publisher {
 			while (p.isAlive() && sampleStream.ready()) {
 				// get line
 				String line = sampleStream.readLine();
+        // System.out.println(line);
 				String[] fields = line.split(" ");
 				
 				// parse line
