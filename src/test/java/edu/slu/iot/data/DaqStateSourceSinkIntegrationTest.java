@@ -45,11 +45,11 @@ public class DaqStateSourceSinkIntegrationTest {
 		// wait for delete to propogate
 		Thread.sleep(2000);
 		
-		clientState = new StateSource<DaqState>(client1, DaqState.class).getState();
+		clientState = new StateSource<DaqState>(client1, thingName, DaqState.class).getState();
 		
 		Thread.sleep(2000);
 								
-		new StateSink<DaqState>(client2, thingName, DaqState.class, new DaqState(listener));
+		new StateSink<DaqState>(client2, thingName, DaqState.class, listener);
 				
 
 		Thread.sleep(2000);
@@ -78,14 +78,14 @@ public class DaqStateSourceSinkIntegrationTest {
 		// wait for delete to propogate
 		Thread.sleep(2000);
 		
-		clientState = new StateSource<DaqState>(client1, DaqState.class).getState();
+		clientState = new StateSource<DaqState>(client1, thingName, DaqState.class).getState();
 		
 		// set initial desired state
 		clientState.update("a", 1.0, 2.0);
 		Thread.sleep(2000);
 						
 		System.out.println("creating sink");
-		new StateSink<DaqState>(client2, thingName, DaqState.class, new DaqState(listener));
+		new StateSink<DaqState>(client2, thingName, DaqState.class, listener);
 		
 		
 		// update desired state

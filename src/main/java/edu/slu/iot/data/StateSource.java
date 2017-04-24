@@ -4,6 +4,8 @@ import java.lang.reflect.InvocationTargetException;
 
 import com.amazonaws.services.iot.client.AWSIotDevice;
 import com.amazonaws.services.iot.client.AWSIotException;
+import com.amazonaws.services.iot.client.AWSIotMessage;
+import com.amazonaws.services.iot.client.AWSIotQos;
 
 import edu.slu.iot.IoTClient;
 
@@ -12,9 +14,9 @@ public class StateSource<T extends State> {
 	private T state;
 	private AWSIotDevice device;
 	
-	public StateSource(IoTClient client, Class<T> clazz) {
+	public StateSource(IoTClient client, String thingName, Class<T> clazz) {
 		
-		this.device = new AWSIotDevice(client.getThingName());
+		this.device = new AWSIotDevice(thingName);
 		try {
 			client.attach(device);
 		} catch (AWSIotException e1) {
@@ -31,8 +33,8 @@ public class StateSource<T extends State> {
 						public <S extends State> void onStateChangeSucceded(S state) {
 							try {
 								String desired = "{\"state\":{\"desired\":" + state.serialize() + "}}";
-								device.update(desired);
-								System.out.println("source changed to: " + desired);
+								device.update(new AWSIotMessage("", AWSIotQos.QOS1, desired), 500);
+								System.out.println("source changed to: " + state.serialize());
 							} catch (AWSIotException e) {
 								e.printStackTrace();
 							}
