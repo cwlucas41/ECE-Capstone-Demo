@@ -14,13 +14,11 @@ import edu.slu.iot.data.Sample;
 public class DaqPublisher extends Publisher {
 
 	private String deviceID = "defaultDeviceID";
-	private Process p;
 	private Scanner s;
 	private double gain;
 
 	public DaqPublisher(IoTClient client, String topic, AWSIotQos qos, Process p, double gain) {
 		super(client, topic, qos);
-		this.p = p;
 		s = new Scanner(p.getInputStream());
 		this.gain = gain;
 	}
