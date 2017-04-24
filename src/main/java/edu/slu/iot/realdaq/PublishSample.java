@@ -49,24 +49,24 @@ public class PublishSample {
 						}
 
 					}
-
-
-
+					
 					// CONFIGURE DIGITAL POTS HERE
-
-					// create new process
-					try {
-						// adcReaderProcess = new ProcessBuilder(adcReader).start();
-						adcReaderProcess = new ProcessBuilder(adcReader, daqState.getFrequency().toString()).start();
-						System.out.println("adc process started");
-					} catch (IOException e) {
-						e.printStackTrace();
-					}					
-
-					// start publishing
-					publishThread = new Thread(new DaqPublisher(client, daqState.getTopic(), AWSIotQos.QOS0, adcReaderProcess));
-					publishThread.start();
-					System.out.println("publisher started");
+					
+					if (daqState.getFrequency() > 0) {
+						// create new process
+						try {
+							// adcReaderProcess = new ProcessBuilder(adcReader).start();
+							adcReaderProcess = new ProcessBuilder(adcReader, daqState.getFrequency().toString()).start();
+							System.out.println("adc process started");
+						} catch (IOException e) {
+							e.printStackTrace();
+						}					
+	
+						// start publishing
+						publishThread = new Thread(new DaqPublisher(client, daqState.getTopic(), AWSIotQos.QOS0, adcReaderProcess));
+						publishThread.start();
+						System.out.println("publisher started");
+					}
 				}
 			}
 
