@@ -16,7 +16,7 @@ import edu.slu.iot.data.StateSource;
 public class PublishSample {
 
 	private static final String adcReader = "src/main/c/ECE_Capstone/reader";
-	private static final String i2cController = "python adjustableResistors.py";
+	private static final String i2cController = "src/main/java/edu/slu/iot/realdaq/adjustableResistors.py";
   private static final String gainToken = "g";
   private static final String freqToken = "f";
 
