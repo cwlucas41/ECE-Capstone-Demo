@@ -30,20 +30,18 @@ public class PublishSample {
 				if (state instanceof DaqState) {
 
 					DaqState daqState = (DaqState) state;
-					System.out.println("state changed to: " + daqState.serialize());
+					System.err.println("state changed to: " + daqState.serialize());
 
 					// destroy an existing process if it exists
 					if (adcReaderProcess != null) {
 						adcReaderProcess.destroy();
-						System.out.println("destroy requested");
-
 
 						try {
+							// wait for destruction
 							adcReaderProcess.waitFor();					
-							System.out.println("process destroy complete");
 
+							// wait for publishing to stop
 							publishThread.join();
-							System.out.println("Thread finished");
 						} catch (InterruptedException e) {
 							e.printStackTrace();
 						}
@@ -55,17 +53,15 @@ public class PublishSample {
 					if (daqState.getFrequency() > 0) {
 						// create new process
 						try {
-							// adcReaderProcess = new ProcessBuilder(adcReader).start();
+							// start new adc process with frequency
 							adcReaderProcess = new ProcessBuilder(adcReader, daqState.getFrequency().toString()).start();
-							System.out.println("adc process started");
 						} catch (IOException e) {
 							e.printStackTrace();
 						}					
 	
-						// start publishing
+						// start publishing for adc
 						publishThread = new Thread(new DaqPublisher(client, daqState.getTopic(), AWSIotQos.QOS0, adcReaderProcess));
 						publishThread.start();
-						System.out.println("publisher started");
 					}
 				}
 			}

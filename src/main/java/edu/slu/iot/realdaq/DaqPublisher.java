@@ -40,6 +40,8 @@ public class DaqPublisher extends Publisher {
 			long s = Long.parseLong(times[0]);
 			long ns = Long.parseLong(times[1]);
 			long timeStamp = (s << 32) + ns;
+			
+			System.err.println(s + " " + ns + " -> " + timeStamp);
 
 			// publish sample
 			Sample sample = new Sample(deviceID, topic, timeStamp, value );
