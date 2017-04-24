@@ -8,6 +8,7 @@ import java.util.Scanner;
 
 import edu.slu.iot.IoTClient;
 import edu.slu.iot.Publisher;
+import edu.slu.iot.data.DaqState;
 import edu.slu.iot.data.GsonSerializer;
 import edu.slu.iot.data.Sample;
 
@@ -16,11 +17,19 @@ public class DaqPublisher extends Publisher {
 	private String deviceID = "defaultDeviceID";
 	private Scanner s;
 	private double gain;
+	private double prevTime = -1;
+	private final double alpha = .01f;
+	private double periodEWMA = 0;
+	private boolean alive = true;
+	private volatile long reportInterval = 1000;
+	private DaqState actualState;
 
-	public DaqPublisher(IoTClient client, String topic, AWSIotQos qos, Process p, double gain) {
+	public DaqPublisher(IoTClient client, String topic, AWSIotQos qos, Process p, double gain, DaqState actualState) {
 		super(client, topic, qos);
 		s = new Scanner(p.getInputStream());
 		this.gain = gain;
+		this.actualState = actualState;
+		new Thread(new FrequencyUpdater()).start();
 	}
 
 	@Override
@@ -43,11 +52,37 @@ public class DaqPublisher extends Publisher {
 			long ns = Long.parseLong(times[1]);
 			long timeStamp = (s << 32) + ns;
 			
+			double currTime = Double.parseDouble(s + "." + ns);
+			if (prevTime != -1) {
+				periodEWMA = alpha * (currTime - prevTime) + (1 - alpha) * periodEWMA;
+			}
+			prevTime = currTime;
+			
 			// publish sample
 			Sample sample = new Sample(deviceID, topic, timeStamp, value );
 			AWSIotMessage message = new NonBlockingPublishListener(topic, qos, sample.serialize());
 			publish(message);
 		}
+		
+		alive = false;
+	}
+	
+	private class FrequencyUpdater implements Runnable {
+
+		@Override
+		public void run() {
+			while (alive) {
+				try {
+					Thread.sleep(reportInterval);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				
+				// actualState.setFrequency(1/periodEWMA);
+				System.out.println(1/periodEWMA);
+			}
+		}
+		
 	}
 
 	private class NonBlockingPublishListener extends AWSIotMessage {
