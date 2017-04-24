@@ -9,6 +9,7 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.NumberFormatter;
 import javax.swing.text.PlainDocument;
+
 import javax.swing.JButton;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -19,6 +20,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.text.DecimalFormat;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -72,15 +74,18 @@ public class StrandWindow {
 	private JList listView;
 	private AppendableView listModel = new AppendableView();
 	private boolean iotConnected = false;
+	private String currentFilePath;
 	
 	private JFrame frame;
 	private JTextField topicField;
+	private String topicString;
 	private JFormattedTextField gainField;
 	private JFormattedTextField frequencyField;
 	private JButton connectButton;
 	private JButton updateStateButton;
 	private JButton allPastDataButton;
 	private JButton rangePastDataButton;
+	private JButton graphButton;
 	private JCheckBox scrollingCheckBox;
 	private JTextPane connectionStatus;
 	private JTextPane topicStatus;
@@ -127,9 +132,10 @@ public class StrandWindow {
 		frame = new JFrame();
 		frame.setBounds(100, 100, 600, 425);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.getContentPane().setLayout(new MigLayout("", "[132.00px,grow][48.00px][114.00:104.00][74.00,grow]", "[25.00px][][8.00px,grow][][grow][grow][grow][][19.00][][grow][][1.00][27.00,grow][grow]"));
+		frame.getContentPane().setLayout(new MigLayout("", "[132.00px,grow][48.00px][114.00:104.00][74.00,grow]", "[25.00px,center][][8.00px,grow,center][][grow,center][grow,center][grow,center][][19.00][center][grow,center][][1.00][27.00,grow,center][][grow]"));
 		
 		JTextPane txtpnChooseAConfiguration = new JTextPane();
+		txtpnChooseAConfiguration.setEditable(false);
 		txtpnChooseAConfiguration.setBackground(SystemColor.control);
 		txtpnChooseAConfiguration.setText("Choose a configuration file (.conf)");
 		frame.getContentPane().add(txtpnChooseAConfiguration, "cell 0 0,alignx left,aligny center");
@@ -140,22 +146,25 @@ public class StrandWindow {
 		
 		
 		connectionStatus = new JTextPane();
+		connectionStatus.setEditable(false);
 		connectionStatus.setBackground(SystemColor.control);
 		connectionStatus.setText("Status: Not Connected");
 		frame.getContentPane().add(connectionStatus, "cell 2 2,alignx center,aligny center");
 		
 		JSeparator secondSeparator = new JSeparator();
-		frame.getContentPane().add(secondSeparator, "cell 0 3 4 1,growx");
+		frame.getContentPane().add(secondSeparator, "cell 0 3 4 1,growx,aligny center");
 		
 		JTextPane txtpnChangeDeviceState = new JTextPane();
+		txtpnChangeDeviceState.setEditable(false);
 		txtpnChangeDeviceState.setBackground(SystemColor.menu);
 		txtpnChangeDeviceState.setText("Change device state");
-		frame.getContentPane().add(txtpnChangeDeviceState, "cell 0 4,grow");
+		frame.getContentPane().add(txtpnChangeDeviceState, "cell 0 4,growx,aligny center");
 		
 		JTextPane txtpnTopic = new JTextPane();
+		txtpnTopic.setEditable(false);
 		txtpnTopic.setBackground(SystemColor.menu);
 		txtpnTopic.setText("Topic:");
-		frame.getContentPane().add(txtpnTopic, "cell 1 4,grow");
+		frame.getContentPane().add(txtpnTopic, "cell 1 4,growx,aligny center");
 	
 		topicField = new JTextField();
 		topicField.setDocument(new JTextFieldLimiter(100)); //limit length to 100 characters
@@ -163,9 +172,10 @@ public class StrandWindow {
 		topicField.setColumns(10);
 		
 		topicStatus = new JTextPane();
+		topicStatus.setEditable(false);
 		topicStatus.setText("Current topic: ");
 		topicStatus.setBackground(SystemColor.menu);
-		frame.getContentPane().add(topicStatus, "cell 3 4,grow");
+		frame.getContentPane().add(topicStatus, "cell 3 4,growx,aligny center");
 		
 		updateStateButton = new JButton("Update");
 		updateListener();
@@ -173,9 +183,10 @@ public class StrandWindow {
 		frame.getContentPane().add(updateStateButton, "cell 0 5,growx,aligny center");
 		
 		JTextPane txtpnGain = new JTextPane();
+		txtpnGain.setEditable(false);
 		txtpnGain.setBackground(SystemColor.menu);
 		txtpnGain.setText("Gain:");
-		frame.getContentPane().add(txtpnGain, "cell 1 5,grow");
+		frame.getContentPane().add(txtpnGain, "cell 1 5,growx,aligny center");
 
 		NumberFormatter gainFormat = new NumberFormatter(new DecimalFormat("#0.0000"));
 		gainField = new JFormattedTextField(gainFormat);
@@ -183,14 +194,16 @@ public class StrandWindow {
 		frame.getContentPane().add(gainField, "cell 2 5,alignx left,aligny center");
 		
 		gainStatus = new JTextPane();
+		gainStatus.setEditable(false);
 		gainStatus.setText("Current gain: 0.75");
 		gainStatus.setBackground(SystemColor.menu);
-		frame.getContentPane().add(gainStatus, "cell 3 5,grow");
+		frame.getContentPane().add(gainStatus, "cell 3 5,growx,aligny center");
 		
 		JTextPane txtpnFrequency = new JTextPane();
+		txtpnFrequency.setEditable(false);
 		txtpnFrequency.setBackground(SystemColor.menu);
 		txtpnFrequency.setText("Frequency:");
-		frame.getContentPane().add(txtpnFrequency, "cell 1 6,grow");
+		frame.getContentPane().add(txtpnFrequency, "cell 1 6,growx,aligny center");
 
 		NumberFormatter frequencyFormat = new NumberFormatter(new DecimalFormat("#00000.00"));
 		frequencyField = new JFormattedTextField(frequencyFormat);
@@ -198,15 +211,17 @@ public class StrandWindow {
 		frame.getContentPane().add(frequencyField, "cell 2 6,alignx left,aligny center");
 		
 		frequencyStatus = new JTextPane();
+		frequencyStatus.setEditable(false);
 		frequencyStatus.setText("Current frequency: 25 kHz");
 		frequencyStatus.setBackground(SystemColor.menu);
-		frame.getContentPane().add(frequencyStatus, "cell 3 6,grow");
+		frame.getContentPane().add(frequencyStatus, "cell 3 6,growx,aligny center");
 		
 		
 		JSeparator thirdSeparator = new JSeparator();
-		frame.getContentPane().add(thirdSeparator, "cell 0 8 4 1,grow");
+		frame.getContentPane().add(thirdSeparator, "cell 0 8 4 1,growx,aligny center");
 		
 		JTextPane pastDataTextBox = new JTextPane();
+		pastDataTextBox.setEditable(false);
 		pastDataTextBox.setBackground(SystemColor.menu);
 		pastDataTextBox.setText("Start time:");
 		frame.getContentPane().add(pastDataTextBox, "cell 0 9,alignx left,aligny center");
@@ -224,15 +239,17 @@ public class StrandWindow {
                     configFile = configFileChooser.getSelectedFile();
                     connectButton.setEnabled(true);
                     allPastDataButton.setEnabled(true);
+                    rangePastDataButton.setEnabled(true);
 				}
 			}
 		});
 		frame.getContentPane().add(btnBrowse, "cell 1 0,growx,aligny center");
 		
 		JSeparator firstSeparator = new JSeparator();
-		frame.getContentPane().add(firstSeparator, "cell 0 1 4 1,grow");
+		frame.getContentPane().add(firstSeparator, "cell 0 1 4 1,growx,aligny center");
 		
 		JTextPane txtpnEnterTheTopic = new JTextPane();
+		txtpnEnterTheTopic.setEditable(false);
 		txtpnEnterTheTopic.setBackground(SystemColor.control);
 		txtpnEnterTheTopic.setText("Connect to a device");
 		frame.getContentPane().add(txtpnEnterTheTopic, "cell 0 2,alignx left,aligny center");
@@ -242,68 +259,50 @@ public class StrandWindow {
 		timeSettings1.generatePotentialMenuTimes(TimeIncrement.FiveMinutes, null, null);
 		DatePickerSettings dateSettings1 = new DatePickerSettings();
 		DateTimePicker startDateTimePicker = new DateTimePicker(dateSettings1, timeSettings1);
-		frame.getContentPane().add(startDateTimePicker, "cell 1 9 2 1,alignx left,growy");
+		frame.getContentPane().add(startDateTimePicker, "cell 1 9 2 1,alignx left,aligny center");
 		
-		allPastDataButton = new JButton("Add all past data");
+		allPastDataButton = new JButton("Show all past data");
 		frame.getContentPane().add(allPastDataButton, "cell 3 9,growx,aligny center");
 		allPastDataButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {				
-				long startTime = Long.MIN_VALUE;
-				QuerySpec spec;
-				String sessionID = topicField.getText();
-				if (sessionID == null) {
-					System.out.println("Please enter your session ID.");
-				}
-				else {
-					if (listModel.getSize() != 0) { //if we have any data from this session so far, only query data from before it began
-						startTime = listModel.getElementAt(0).getTimestamp();
-						spec = new QuerySpec()
-							.withRangeKeyCondition(new RangeKeyCondition("timestamp").lt(startTime))
-							.withHashKey("sessionID", sessionID);
-					} else {
-						spec = new QuerySpec()
-							.withRangeKeyCondition(new RangeKeyCondition("timestamp").gt(startTime))
-							.withHashKey("sessionID", sessionID);
-					}
-					dynamoDB = AmazonDynamoDBClientBuilder.standard()
-							.withRegion(Regions.US_WEST_2)
-							.withCredentials(new ProfileCredentialsProvider("Certificate1/ddbconf.txt", "default"))
-							.build();
-					Table table = new Table(dynamoDB, getTableName());
-					ItemCollection<QueryOutcome> items = table.query(spec);
-					Iterator<Item> iterator = items.iterator();
-					Item item = null;
-					List<Sample> writeToView = new ArrayList<Sample>();
-					while (iterator.hasNext()) { //make sure this doesn't interrupt rendering too much
-					    item = iterator.next();
-					    writeToView.add(new Sample(item));
-					}
-					listModel.addBulkToList(writeToView);
-				}
+				loadHistoricalData();
 			}
 		});
 		allPastDataButton.setEnabled(false);
 		
 		JTextPane txtpnEndTime = new JTextPane();
+		txtpnEndTime.setEditable(false);
 		txtpnEndTime.setBackground(SystemColor.menu);
 		txtpnEndTime.setText("End time:");
-		frame.getContentPane().add(txtpnEndTime, "cell 0 10,grow");
+		frame.getContentPane().add(txtpnEndTime, "cell 0 10,growx,aligny center");
 		
 		TimePickerSettings timeSettings2 = new TimePickerSettings();
 		timeSettings2.setInitialTimeToNow();
 		timeSettings2.generatePotentialMenuTimes(TimeIncrement.FiveMinutes, null, null);
 		DatePickerSettings dateSettings2 = new DatePickerSettings();
 		DateTimePicker stopDateTimePicker = new DateTimePicker(dateSettings2, timeSettings2);
-		frame.getContentPane().add(stopDateTimePicker, "cell 1 10 2 1,alignx left,growy");
+		frame.getContentPane().add(stopDateTimePicker, "cell 1 10 2 1,alignx left,aligny center");
 		
-		rangePastDataButton = new JButton("Add range of past data");
+		rangePastDataButton = new JButton("Show range of past data");
 		rangePastDataButton.setEnabled(false);
+		rangePastDataButton.addMouseListener(new MouseAdapter() {
+				@Override
+				public void mouseClicked(MouseEvent arg0) {
+					if ((startDateTimePicker.getDatePicker().getDate() != null) && (stopDateTimePicker.getDatePicker().getDate() != null)) {
+						ZoneId zoneId = ZoneId.systemDefault();
+						long start = startDateTimePicker.getDateTimePermissive().atZone(zoneId).toEpochSecond();
+						long end = stopDateTimePicker.getDateTimePermissive().atZone(zoneId).toEpochSecond();
+						loadHistoricalData(start*1000, end*1000); //TODO: change when integration ready
+					}
+				}
+		});
 		frame.getContentPane().add(rangePastDataButton, "cell 3 10,growx,aligny center");
 		
 		JSeparator fourthSeparator = new JSeparator();
-		frame.getContentPane().add(fourthSeparator, "cell 0 11 4 1,grow");
+		frame.getContentPane().add(fourthSeparator, "cell 0 11 4 1,growx,aligny center");
 		
 		JTextPane txtpnChooseAFile = new JTextPane();
+		txtpnChooseAFile.setEditable(false);
 		txtpnChooseAFile.setText("Choose or create a file to write to");
 		txtpnChooseAFile.setBackground(SystemColor.menu);
 		frame.getContentPane().add(txtpnChooseAFile, "cell 0 13,growx,aligny center");
@@ -312,32 +311,7 @@ public class StrandWindow {
 			@Override
 			public void mouseClicked(MouseEvent arg0) {
 				if (writeFile != null) {
-					File target = new File(writeFile.getPath());
-					if (!target.exists())
-						try {
-							target.createNewFile();
-						} catch (IOException e) {
-							System.out.println("Could not create new file " + writeFile.getPath());
-							e.printStackTrace();
-						}
-					FileOutputStream fstream = null;
-					try {fstream = new FileOutputStream(target);}
-					catch (FileNotFoundException fnfe) {
-						System.out.println("File not found exception in file write");
-					}
-					BufferedWriter bwriter = new BufferedWriter(new OutputStreamWriter(fstream));
-					try {
-						Sample sample = null;
-						for (int i = 0; i < listModel.getSize(); i++) {
-							sample = listModel.getElementAt(i);
-							bwriter.write(Long.toString(sample.getTimestamp()) + ", " + Float.toString(sample.getValue()));
-							bwriter.newLine();
-						}
-						bwriter.close();
-					}
-					catch (IOException ioe) {
-						System.out.println("IOException on file write");
-					}
+					writeToFile(writeFile.getPath());
 				}
 			}
 		});
@@ -356,6 +330,7 @@ public class StrandWindow {
 				if (chooseStatus == JFileChooser.APPROVE_OPTION) {
                     writeFile = writingFileChooser.getSelectedFile();
                     writeButton.setEnabled(true);
+                    graphButton.setEnabled(true);
 				}
 			}
 		});
@@ -365,12 +340,98 @@ public class StrandWindow {
 		frame.getContentPane().add(scrollingCheckBox, "cell 3 13,growx,aligny center");
 		scrollingCheckBox.setSelected(true);
 		
+		graphButton = new JButton("Graph...");
+		graphButton.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent arg0) {
+				pythonGraphing();
+			}
+		});
+		frame.getContentPane().add(graphButton, "cell 2 14,growx,aligny center");
+		
 		JScrollPane scrollPane = new JScrollPane();
-		frame.getContentPane().add(scrollPane, "cell 0 14 4 1,grow");
+		frame.getContentPane().add(scrollPane, "cell 0 15 4 1,grow");
 		
 		listView = new JList(listModel);
-		scrollPane.setViewportView(listView);
-		
+		scrollPane.setViewportView(listView);	
+	}
+	
+	public void pythonGraphing() {
+		writeToFile(currentFilePath);
+		try {
+			Runtime.getRuntime().exec("python graphinfScript.py" + currentFilePath);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void writeToFile(String filePath) {
+		currentFilePath = filePath;
+		File target = new File(filePath);
+		if (!target.exists())
+			try {
+				target.createNewFile();
+			} catch (IOException e) {
+				System.out.println("Could not create new file " + writeFile.getPath());
+				e.printStackTrace();
+			}
+		FileOutputStream fstream = null;
+		try {fstream = new FileOutputStream(target);}
+		catch (FileNotFoundException fnfe) {
+			System.out.println("File not found exception in file write");
+		}
+		BufferedWriter bwriter = new BufferedWriter(new OutputStreamWriter(fstream));
+		try {
+			Sample sample = null;
+			bwriter.write("time,voltage");
+			bwriter.newLine();
+			for (int i = 0; i < listModel.getSize(); i++) {
+				sample = listModel.getElementAt(i);
+				long timeStamp = sample.getTimestamp();
+				long seconds = timeStamp >> 32;
+				long nanoseconds = timeStamp & 0x0000FFFF;
+				bwriter.write(Long.toString(seconds) + "." + nanoseconds + "," + Float.toString(sample.getValue()));
+				bwriter.newLine();
+			}
+			bwriter.close();
+		}
+		catch (IOException ioe) {
+			System.out.println("IOException on file write");
+		}
+	}
+	
+	public void loadHistoricalData() {
+		loadHistoricalData(Long.MIN_VALUE, Long.MAX_VALUE);
+	}
+	
+	public void loadHistoricalData(long startTime, long endTime) {
+		listModel.clearList();
+		QuerySpec spec;
+		if (topicString == null) {
+			System.out.println("Please enter your session ID.");
+		}
+		else {
+			if (listModel.getSize() != 0) { //if we have any data from this session so far, only query data from before it began
+				endTime = listModel.getElementAt(0).getTimestamp();
+			}
+			spec = new QuerySpec()
+				.withRangeKeyCondition(new RangeKeyCondition("timestamp").between(startTime, endTime))
+				.withHashKey("sessionID", topicString);
+			dynamoDB = AmazonDynamoDBClientBuilder.standard()
+					.withRegion(Regions.US_WEST_2)
+					.withCredentials(new ProfileCredentialsProvider("Certificate1/ddbconf.txt", "default"))
+					.build();
+			Table table = new Table(dynamoDB, getTableName());
+			ItemCollection<QueryOutcome> items = table.query(spec);
+			Iterator<Item> iterator = items.iterator();
+			Item item = null;
+			List<Sample> writeToView = new ArrayList<Sample>();
+			while (iterator.hasNext()) { //make sure this doesn't interrupt rendering too much
+			    item = iterator.next();
+			    writeToView.add(new Sample(item));
+			}
+			listModel.addBulkToList(writeToView);
+		}
 	}
 	
 	public void connectionListener() {
@@ -417,6 +478,7 @@ public class StrandWindow {
 						iotClient.subscribe(sListener);
 						listModel.clearList();
 						topicStatus.setText("Current topic: " + topicField.getText());
+						topicString = topicField.getText();
 						topicField.setText("");
 					} catch (AWSIotException e) {
 						e.printStackTrace(); //TODO: fix all of these catch blocks to do something sensible
@@ -434,7 +496,7 @@ public class StrandWindow {
 					frequencyField.setText("");
 				}
 				
-				stateSyncObject.update(topic, gain, freq);
+				stateSyncObject.update(topic, freq, gain);
 			}
 		});
 	}
@@ -489,7 +551,14 @@ public class StrandWindow {
 		public void addBulkToList(List<Sample> listOfValues) {
 			model.addAll(listOfValues);
 			Collections.sort(model);
-			fireIntervalAdded(this, 0, this.getSize() - 1);
+			if (this.getSize() > 0)
+				fireIntervalAdded(this, 0, this.getSize() - 1);
+			if (scrollingCheckBox.isSelected()) {
+				int lastIndex = listModel.getSize() - 1;
+				if (lastIndex >= 0) {
+				   listView.ensureIndexIsVisible(lastIndex);
+				}
+			}
 		}
 		public List<Sample> getList() {
 			return model;
