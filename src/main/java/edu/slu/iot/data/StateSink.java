@@ -56,10 +56,6 @@ public class StateSink<T extends State> {
 			JsonObject desired = jp.parse(initialState).getAsJsonObject().getAsJsonObject("state").getAsJsonObject("desired");
 			updateStateAndReport(desired.toString());
 		}
-	}
-	
-	public StateSink(IoTClient client, Class<T> clazz, StateListener listener) {
-		this(client, client.getTargetThingName(), clazz, listener);
 	}	
 	
 	private void updateStateAndReport(String jsonState) {

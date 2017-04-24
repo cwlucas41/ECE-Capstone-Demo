@@ -11,26 +11,30 @@ import edu.slu.iot.data.DaqState;
 import edu.slu.iot.data.State;
 import edu.slu.iot.data.StateListener;
 import edu.slu.iot.data.StateSink;
+import edu.slu.iot.data.StateSource;
 
 public class PublishSample {
 
 	private static final String adcReader = "src/main/c/ECE_Capstone/reader";
 	private static Process adcReaderProcess = null;
 	private static Thread publishThread = null;
+	private static DaqState actualState;
 
 	public static void main(String args[]) throws InterruptedException, AWSIotException, AWSIotTimeoutException {
 
 		IoTClient client = new IoTClient("Certificate1/conf.txt");
+		
+		actualState = new StateSource<DaqState>(client, client.getActualThingName(), DaqState.class).getState();
 
 
-		new StateSink<DaqState>(client, DaqState.class, new StateListener() {
+		new StateSink<DaqState>(client, client.getTargetThingName(), DaqState.class, new StateListener() {
 
 			@Override
 			public <T extends State> void onStateChangeSucceded(T state) {
 				if (state instanceof DaqState) {
 
-					DaqState daqState = (DaqState) state;
-					System.err.println("state changed to: " + daqState.serialize());
+					DaqState targetState = (DaqState) state;
+					System.err.println("state changed to: " + targetState.serialize());
 
 					// destroy an existing process if it exists
 					if (adcReaderProcess != null) {
@@ -51,18 +55,22 @@ public class PublishSample {
 					}
 					
 					// CONFIGURE DIGITAL POTS HERE
+					double actualGain = targetState.getGain();
+					double actualFreq = targetState.getFrequency();
 					
-					if (daqState.getFrequency() > 0) {
+					actualState.update(targetState.getTopic(), actualFreq, actualGain);
+					
+					if (targetState.getFrequency() > 0) {
 						// create new process
 						try {
 							// start new adc process with frequency
-							adcReaderProcess = new ProcessBuilder(adcReader, daqState.getFrequency().toString()).start();
+							adcReaderProcess = new ProcessBuilder(adcReader, targetState.getFrequency().toString()).start();
 						} catch (IOException e) {
 							e.printStackTrace();
 						}					
 	
 						// start publishing for adc
-						publishThread = new Thread(new DaqPublisher(client, daqState.getTopic(), AWSIotQos.QOS0, adcReaderProcess, daqState.getGain()));
+						publishThread = new Thread(new DaqPublisher(client, targetState.getTopic(), AWSIotQos.QOS0, adcReaderProcess, targetState.getGain()));
 						publishThread.start();
 						
 						System.err.println("publishing started");
