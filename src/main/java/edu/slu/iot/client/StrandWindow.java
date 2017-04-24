@@ -380,7 +380,13 @@ public class StrandWindow {
 				long timeStamp = sample.getTimestamp();
 				long seconds = timeStamp >> 32;
 				long nanoseconds = timeStamp & 0x0000FFFF;
-				bwriter.write(Long.toString(seconds) + "." + nanoseconds + "," + Float.toString(sample.getValue()));
+				int nanoDigits = ((int) Math.log10(nanoseconds)) + 1; // need to add leading zeroes to nanosecond value
+				int leadingZeroes = 8 - nanoDigits;
+				String zeroes = "";
+				for (int j = 0; j < leadingZeroes; j++) {
+					zeroes = zeroes + "0";
+				}
+				bwriter.write(Long.toString(seconds) + "." + zeroes + nanoseconds + "," + Float.toString(sample.getValue())); //let's not even bother converting to a data type -- use a lossless representation
 				bwriter.newLine();
 			}
 			bwriter.close();
@@ -492,10 +498,21 @@ public class StrandWindow {
 	}
 	
 	public void writeLineToList(Sample sampleToWrite) {
-		listModel.appendToList(sampleToWrite);
+		List<Sample> storedList = listModel.getList(); //so we can have a more direct reference
+		if (( sampleToWrite.compareTo(storedList.get(storedList.size()-1)) ) < 0) {
+			for (int i = 2; i < storedList.size(); i++) {
+				if (sampleToWrite.compareTo(storedList.get(storedList.size()-i)) >= 0) {
+					listModel.insertIntoList((storedList.size() - i + 1), sampleToWrite);
+					break;
+				}
+			}
+		}
+		else {
+			listModel.appendToList(sampleToWrite);
+		}
 		if (scrollingCheckBox.isSelected()) {
 			int lastIndex = listModel.getSize() - 1;
-			if (lastIndex >= 0) {
+			if (lastIndex > 0) {
 			   listView.ensureIndexIsVisible(lastIndex);
 			}
 		}
@@ -538,14 +555,18 @@ public class StrandWindow {
 			model.add(value);
 			fireIntervalAdded(this, this.getSize() - 1, this.getSize() - 1);
 		}
+		public void insertIntoList(int index, Sample value) {
+			model.add(index, value);
+			fireIntervalAdded(this, index, this.getSize() - 1);
+		}
 		public void addBulkToList(List<Sample> listOfValues) {
 			model.addAll(listOfValues);
 			Collections.sort(model);
 			if (this.getSize() > 0)
 				fireIntervalAdded(this, 0, this.getSize() - 1);
 			if (scrollingCheckBox.isSelected()) {
-				int lastIndex = listModel.getSize() - 1;
-				if (lastIndex >= 0) {
+				int lastIndex = this.getSize() - 1;
+				if (lastIndex > 0) {
 				   listView.ensureIndexIsVisible(lastIndex);
 				}
 			}
