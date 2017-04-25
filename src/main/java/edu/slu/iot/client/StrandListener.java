@@ -14,9 +14,14 @@ package edu.slu.iot.client;
  * permissions and limitations under the License.
  */
 
+import java.io.UnsupportedEncodingException;
+import java.util.List;
+
 import com.amazonaws.services.iot.client.AWSIotMessage;
 import com.amazonaws.services.iot.client.AWSIotQos;
 import com.amazonaws.services.iot.client.AWSIotTopic;
+import com.google.gson.reflect.TypeToken;
+
 import edu.slu.iot.data.GsonSerializer;
 import edu.slu.iot.data.Sample;
 
@@ -35,8 +40,8 @@ public class StrandListener extends AWSIotTopic {
 
     @Override
     public void onMessage(AWSIotMessage message) {
-    	Sample sample = GsonSerializer.deserialize(message.getStringPayload(), Sample.class);
-        System.out.println(System.currentTimeMillis() + ": <<< " + sample.serialize());
-        sw.writeLineToList(sample);
+    	List<Sample> samples = GsonSerializer.deserialize(message.getStringPayload(), new TypeToken<List<Sample>>(){}.getType());
+        //System.out.println(System.currentTimeMillis() + ": <<< " + samples.serialize());
+        sw.writeLineToList(samples);
     }
 }

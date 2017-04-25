@@ -55,12 +55,8 @@ import com.amazonaws.services.dynamodbv2.document.spec.QuerySpec;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.regions.Regions;
 
-import javax.swing.JScrollPane;
 import java.awt.SystemColor;
-import javax.swing.JList;
-import javax.swing.AbstractListModel;
 import javax.swing.JSeparator;
-import javax.swing.JCheckBox;
 import com.github.lgooddatepicker.components.*;
 import com.github.lgooddatepicker.components.DateTimePicker;
 import com.github.lgooddatepicker.components.TimePickerSettings.TimeIncrement;
@@ -536,6 +532,12 @@ public class StrandWindow {
 		}
 		else {
 			listModel.add(sampleToWrite);
+		}
+	}
+	
+	public void writeLineToList(List<Sample> samplesToWrite) {
+		for (int j = 0; j < samplesToWrite.size(); j++) {
+			writeLineToList(samplesToWrite.get(j));
 		}
 	}
 
