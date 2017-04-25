@@ -1,5 +1,7 @@
 package edu.slu.iot.data;
 
+import java.lang.reflect.Type;
+
 import com.google.gson.Gson;
 
 public class GsonSerializer {
@@ -11,5 +13,9 @@ public class GsonSerializer {
 	
 	public static <T> T deserialize(String json, Class<T> classOfT) {
 		return gson.fromJson(json, classOfT);
+	}
+	
+	public static <T> T deserialize(String json, Type typeOfT) {
+		return gson.fromJson(json, typeOfT);
 	}
 }

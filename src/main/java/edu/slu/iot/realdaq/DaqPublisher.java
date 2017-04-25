@@ -4,6 +4,8 @@ package edu.slu.iot.realdaq;
 import com.amazonaws.services.iot.client.AWSIotMessage;
 import com.amazonaws.services.iot.client.AWSIotQos;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Scanner;
 
 import edu.slu.iot.IoTClient;
@@ -27,8 +29,8 @@ public class DaqPublisher extends Publisher {
 	public void run() {	
 
 		System.out.println("publisher running");
-		
-		int i = 0;
+				
+		List<Sample> batch = new LinkedList<Sample>();
 
 		while (s.hasNextLine()) {
 			// get line
@@ -46,12 +48,15 @@ public class DaqPublisher extends Publisher {
 			long timeStamp = (s << 32) + ns;
 			
 			// publish sample
-			Sample sample = new Sample(deviceID, topic, timeStamp, value );
-			AWSIotMessage message = new NonBlockingPublishListener(topic, qos, sample.serialize());
-			publish(message);
-			i++;
+			Sample sample = new Sample(deviceID, topic, timeStamp, value);
+			batch.add(sample);
+			
+			if (batch.size() > 50) {
+				AWSIotMessage message = new NonBlockingPublishListener(topic, qos, GsonSerializer.serialize(batch));
+				publish(message);
+				batch = new LinkedList<Sample>();
+			}
 		}
-		System.out.println("Published: " + i);
 	}
 
 	private class NonBlockingPublishListener extends AWSIotMessage {
