@@ -66,16 +66,10 @@ public class PublishSample {
 						//adjust variable resistors 
 						//System.out.println("Changing Digital pots");
 						i2cControllerProcess = new ProcessBuilder(i2cController,freqToken ,targetState.getFrequency().toString()).start();
-					  Scanner in =new Scanner(i2cControllerProcess.getInputStream());
-            while(in.hasNextLine()){
-              actualFreq = Float.parseFloat(in.nextLine());
-            }
-            System.out.println("actualFreq is " + actualFreq);
             i2cControllerProcess.waitFor();
-					  in.close();	
 						//System.out.println("Freq set. Updating Gain");
 						i2cControllerProcess = new ProcessBuilder(i2cController,gainToken ,targetState.getGain().toString()).start();
-						in = new Scanner(i2cControllerProcess.getInputStream());
+						Scanner in = new Scanner(i2cControllerProcess.getInputStream());
             while(in.hasNextLine()){
               actualGain= Float.parseFloat(in.nextLine());
             }

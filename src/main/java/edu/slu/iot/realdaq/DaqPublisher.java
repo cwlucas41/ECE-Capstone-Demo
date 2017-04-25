@@ -61,7 +61,7 @@ public class DaqPublisher extends Publisher {
 
 		@Override
 		public void onSuccess() {
-			System.out.println("daq: >>> " + sample.serialize());
+			//System.out.println("daq: >>> " + sample.serialize());
 		}
 
 		@Override
