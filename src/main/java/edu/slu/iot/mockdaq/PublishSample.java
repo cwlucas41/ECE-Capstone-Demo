@@ -12,7 +12,7 @@ public class PublishSample {
     	
 		IoTClient client = new IoTClient("Certificate2/conf.txt");
     	
-		client.publish(new TestPublisher(client, "demo", AWSIotQos.QOS0, "demo"));
+		client.publish(new TestPublisher(client, "demo", AWSIotQos.QOS0));
 
     }
 }
