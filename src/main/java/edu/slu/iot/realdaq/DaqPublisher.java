@@ -38,7 +38,9 @@ public class DaqPublisher extends Publisher {
 
 			// parse line
 			float adcValue = (float) Integer.parseInt(fields[1]);
-			float value = (float) (adcValue * 1.8f / 65536f / targetState.getGain());
+			float readVolts = adcValue * 1.8f / 65536f;
+			float offsetFix = readVolts - .9f;
+			float value = (float) (offsetFix / targetState.getGain());
 			
 			String[] times = fields[0].split(":");
 			long s = Long.parseLong(times[0]);

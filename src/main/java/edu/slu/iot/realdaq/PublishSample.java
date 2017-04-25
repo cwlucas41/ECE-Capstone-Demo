@@ -57,36 +57,36 @@ public class PublishSample {
 						}
 
 					}
-          
-					double actualGain = targetState.getGain();
+
+					double actualGain = 0;
 					double actualFreq = targetState.getFrequency();
-          
+
 
 					try{
 						//adjust variable resistors 
 						//System.out.println("Changing Digital pots");
 						i2cControllerProcess = new ProcessBuilder(i2cController,freqToken ,targetState.getFrequency().toString()).start();
-            i2cControllerProcess.waitFor();
+						i2cControllerProcess.waitFor();
 						//System.out.println("Freq set. Updating Gain");
 						i2cControllerProcess = new ProcessBuilder(i2cController,gainToken ,targetState.getGain().toString()).start();
 						Scanner in = new Scanner(i2cControllerProcess.getInputStream());
-            while(in.hasNextLine()){
-              actualGain= Float.parseFloat(in.nextLine());
-            }
-            System.out.println("actualGain is " + actualGain);
-            i2cControllerProcess.waitFor();
-					  in.close();	
+						i2cControllerProcess.waitFor();
+						while(in.hasNextLine()){
+							actualGain= Float.parseFloat(in.nextLine());
+						}
+						System.out.println("actualGain is " + actualGain);
+						in.close();	
 						//System.out.println("Gain set. ");
 						//System.out.println("Dpot update complete");
 					}catch(IOException | InterruptedException e ){
 						e.printStackTrace();
 					}
-					
-					
-          
+
+
+
 
 					actualState.update(targetState.getTopic(), actualFreq, actualGain);
-					
+
 					if (targetState.getFrequency() > 0) {
 						// create new process
 						try {
@@ -99,7 +99,7 @@ public class PublishSample {
 						// start publishing for adc
 						publishThread = new Thread(new DaqPublisher(client, AWSIotQos.QOS0, adcReaderProcess, targetState));
 						publishThread.start();
-						
+
 						System.err.println("publishing started");
 					} else {
 						System.err.println("publishing stopped");
