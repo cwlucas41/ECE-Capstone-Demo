@@ -2,37 +2,31 @@ package edu.slu.iot.data;
 import com.amazonaws.services.dynamodbv2.document.Item;
 
 public class Sample implements Comparable<Sample> {
-	private String sessionID;
-	private long timestamp;
-	private float value;
+	private long t;
+	private float v;
 	
-	public Sample(String deviceID, String sessionID, long timestamp, float value) {
-		this.sessionID = sessionID;
-		this.timestamp = timestamp;
-		this.value = value;
+	public Sample(long timestamp, float value) {
+		this.t = timestamp;
+		this.v = value;
 	}
 	
 	// construct from dynamoDB Item object; used for database query conversion
 	public Sample(Item item) {
-		this.sessionID = item.getString("sessionID");
-		this.timestamp = item.getLong("timestamp");
-		this.value = item.getFloat("value");
+		this.t = item.getLong("timestamp");
+		this.v = item.getFloat("value");
 	}
 
-	public String getSessionID() {
-		return sessionID;
-	}
 	public long getTimestamp() {
-		return timestamp;
+		return t;
 	}
 	public float getValue() {
-		return value;
+		return v;
 	}
 
 	@Override
 	public int compareTo(Sample o) {
 		// sorts by increasing timestamp
-		return ((Long) timestamp).compareTo(o.timestamp);
+		return ((Long) t).compareTo(o.t);
 	}
 	
 	public String serialize() {
@@ -41,6 +35,6 @@ public class Sample implements Comparable<Sample> {
 
 	@Override
 	public String toString() {
-		return "sessionID: " + sessionID + ", timestamp: " + timestamp + " value: " + value;
+		return "timestamp: " + t + " value: " + v;
 	}
 }

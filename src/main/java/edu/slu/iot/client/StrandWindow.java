@@ -66,7 +66,6 @@ public class StrandWindow {
 
 	private StrandListener sListener;
 	private DaqState stateSourceObject;
-	private StateSink<DaqState> stateSinkObject;
 	private File configFile = null;
 	private File writeFile = null;
 	private IoTClient iotClient;
@@ -483,7 +482,7 @@ public class StrandWindow {
 						}
 					}
 				};
-				stateSinkObject = new StateSink<DaqState>(iotClient, iotClient.getActualThingName(), DaqState.class, sinkListener);
+				new StateSink<DaqState>(iotClient, iotClient.getActualThingName(), DaqState.class, sinkListener);
 				iotConnected = true;
 				connectionStatus.setText("Status: Connected");
 				connectButton.setText("Stop");
