@@ -4,6 +4,8 @@ import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import com.amazonaws.services.iot.client.AWSIotDevice;
 import com.amazonaws.services.iot.client.AWSIotException;
@@ -20,6 +22,7 @@ public class IoTClient {
 	public AWSIotMqttClient awsIotClient;
 	private String targetThingName;
 	private String actualThingName;
+	private Executor executor = Executors.newCachedThreadPool();
 	
 	public IoTClient(String filename) throws AWSIotException {
         initClient(filename);
@@ -30,13 +33,9 @@ public class IoTClient {
 		awsIotClient.publish(message);
 	}
 	
-	public Thread publish(Publisher publisher) throws InterruptedException {
-        Thread nonBlockingPublishThread = new Thread(publisher);
-
-        nonBlockingPublishThread.start();
-        
-        return nonBlockingPublishThread;
-	}
+	public void publish(Publisher publisher) throws InterruptedException {
+        executor.execute(publisher);
+   	}
 	
 	public void subscribe(AWSIotTopic topic) throws AWSIotException {
 	    awsIotClient.subscribe(topic, 1000);
