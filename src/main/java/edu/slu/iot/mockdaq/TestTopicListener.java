@@ -18,8 +18,8 @@ import com.amazonaws.services.iot.client.AWSIotMessage;
 import com.amazonaws.services.iot.client.AWSIotQos;
 import com.amazonaws.services.iot.client.AWSIotTopic;
 
+import edu.slu.iot.data.Batch;
 import edu.slu.iot.data.GsonSerializer;
-import edu.slu.iot.data.Sample;
 
 /**
  * This class extends {@link AWSIotTopic} to receive messages from a subscribed
@@ -33,8 +33,8 @@ public class TestTopicListener extends AWSIotTopic {
 
     @Override
     public void onMessage(AWSIotMessage message) {
-    	Sample sample = GsonSerializer.deserialize(message.getStringPayload(), Sample.class);
-        System.out.println(System.currentTimeMillis() + ": <<< " + sample.serialize());
+    	Batch batch = GsonSerializer.deserialize(message.getStringPayload(), Batch.class);
+        System.out.println(System.currentTimeMillis() + ": <<< " + batch.serialize());
     }
 
 }

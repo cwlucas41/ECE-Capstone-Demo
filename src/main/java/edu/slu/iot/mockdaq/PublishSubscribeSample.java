@@ -32,9 +32,9 @@ public class PublishSubscribeSample {
 
     public static void main(String args[]) throws InterruptedException, AWSIotException, AWSIotTimeoutException {
 
-    	IoTClient client = new IoTClient("Certificate1/conf.txt");
+    	IoTClient client = new IoTClient("Certificate2/conf.txt");
     	
-        client.subscribe(new TestTopicListener("test", AWSIotQos.QOS0));
-        client.publish(new TestPublisher(client, "test", AWSIotQos.QOS0, "demo"));
+        client.subscribe(new TestTopicListener("test2", AWSIotQos.QOS0));
+        client.publish(new TestPublisher(client, "test2", AWSIotQos.QOS0));
     }
 }

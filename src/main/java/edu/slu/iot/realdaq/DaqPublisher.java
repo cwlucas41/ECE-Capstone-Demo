@@ -4,25 +4,24 @@ package edu.slu.iot.realdaq;
 import com.amazonaws.services.iot.client.AWSIotMessage;
 import com.amazonaws.services.iot.client.AWSIotQos;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Scanner;
 
 import edu.slu.iot.IoTClient;
 import edu.slu.iot.Publisher;
+import edu.slu.iot.data.Batch;
+import edu.slu.iot.data.DaqState;
 import edu.slu.iot.data.GsonSerializer;
 import edu.slu.iot.data.Sample;
 
 public class DaqPublisher extends Publisher {
 
-	private String deviceID = "defaultDeviceID";
 	private Scanner s;
-	private double gain;
+	private DaqState targetState;
 
-	public DaqPublisher(IoTClient client, String topic, AWSIotQos qos, Process p, double gain) {
-		super(client, topic, qos);
+	public DaqPublisher(IoTClient client, AWSIotQos qos, Process p, DaqState targetState) {
+		super(client, targetState.getTopic(), qos);
 		s = new Scanner(p.getInputStream());
-		this.gain = gain;
+		this.targetState = targetState;
 	}
 
 	@Override
@@ -30,7 +29,7 @@ public class DaqPublisher extends Publisher {
 
 		System.out.println("publisher running");
 				
-		List<Sample> batch = new LinkedList<Sample>();
+		Batch batch = new Batch(targetState.getTopic(), targetState.getFrequency());
 
 		while (s.hasNextLine()) {
 			// get line
@@ -40,7 +39,7 @@ public class DaqPublisher extends Publisher {
 
 			// parse line
 			float adcValue = (float) Integer.parseInt(fields[1]);
-			float value = (float) (adcValue * 1.8f / 65536f / gain);
+			float value = (float) (adcValue * 1.8f / 65536f / targetState.getGain());
 			
 			String[] times = fields[0].split(":");
 			long s = Long.parseLong(times[0]);
@@ -48,13 +47,13 @@ public class DaqPublisher extends Publisher {
 			long timeStamp = (s << 32) + ns;
 			
 			// publish sample
-			Sample sample = new Sample(deviceID, topic, timeStamp, value);
+			Sample sample = new Sample(timeStamp, value);
 			batch.add(sample);
 			
 			if (batch.size() > 50) {
-				AWSIotMessage message = new NonBlockingPublishListener(topic, qos, GsonSerializer.serialize(batch));
+				AWSIotMessage message = new NonBlockingPublishListener(topic, qos, batch.serialize());
 				publish(message);
-				batch = new LinkedList<Sample>();
+				batch = new Batch(targetState.getTopic(), targetState.getFrequency());
 			}
 		}
 	}
