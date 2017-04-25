@@ -8,6 +8,8 @@ import java.util.List;
 
 import org.junit.Test;
 
+import com.google.gson.reflect.TypeToken;
+
 import edu.slu.iot.data.Sample;
 
 public class SampleTest {
@@ -27,6 +29,19 @@ public class SampleTest {
 			assertEquals(s.getTimestamp(), i);
 			i++;
 		}
+	}
+	
+	@Test
+	public void batchSerialization() {
+		List<Sample> l = new ArrayList<Sample>();
+		for (int i = 0; i < 100; i++) {
+			l.add(new Sample("", "", i, 0));
+		}
+		String serialized = GsonSerializer.serialize(l);
+		System.out.println(serialized);
+		
+		List<Sample> l2 = GsonSerializer.deserialize(serialized, new TypeToken<List<Sample>>(){}.getType());
+		System.out.println(l2);
 	}
 
 }
