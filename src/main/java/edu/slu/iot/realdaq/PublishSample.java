@@ -58,7 +58,7 @@ public class PublishSample {
 
 					}
 
-					double actualGain = targetState.getGain();
+					double actualGain = 0;
 					double actualFreq = targetState.getFrequency();
 
 
@@ -69,13 +69,12 @@ public class PublishSample {
 						i2cControllerProcess.waitFor();
 						//System.out.println("Freq set. Updating Gain");
 						i2cControllerProcess = new ProcessBuilder(i2cController,gainToken ,targetState.getGain().toString()).start();
-						i2cControllerProcess.waitFor();
 						Scanner in = new Scanner(i2cControllerProcess.getInputStream());
+						i2cControllerProcess.waitFor();
 						while(in.hasNextLine()){
 							actualGain= Float.parseFloat(in.nextLine());
 						}
 						System.out.println("actualGain is " + actualGain);
-						i2cControllerProcess.waitFor();
 						in.close();	
 						//System.out.println("Gain set. ");
 						//System.out.println("Dpot update complete");
