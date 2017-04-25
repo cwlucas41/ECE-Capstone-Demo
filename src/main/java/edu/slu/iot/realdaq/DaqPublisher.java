@@ -10,7 +10,6 @@ import edu.slu.iot.IoTClient;
 import edu.slu.iot.Publisher;
 import edu.slu.iot.data.Batch;
 import edu.slu.iot.data.DaqState;
-import edu.slu.iot.data.GsonSerializer;
 import edu.slu.iot.data.Sample;
 
 public class DaqPublisher extends Publisher {
