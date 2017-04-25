@@ -411,7 +411,6 @@ public class StrandWindow {
 	}
 
 	public void loadHistoricalData(long startTime, long endTime) {
-		listModel.clear();
 		QuerySpec spec;
 		if (topicString == null) {
 			System.out.println("Please enter your session ID.");
@@ -437,6 +436,7 @@ public class StrandWindow {
 				writeToView.add(new Sample(item));
 			}
 			listModel.addAll(writeToView);
+			Collections.sort(listModel);
 		}
 	}
 
@@ -471,7 +471,7 @@ public class StrandWindow {
 							DaqState daqState = (DaqState) state;
 							String retrievedTopic = daqState.getTopic().toString();
 							topicStatus.setText("Current topic: " + retrievedTopic);
-							if (!retrievedTopic.equals("")) { //update topic
+							if (!retrievedTopic.equals("") && !retrievedTopic.equals(topicString)) { //update topic
 								try {
 									if (topicString != null) {
 										iotClient.unsubscribe(sListener);
