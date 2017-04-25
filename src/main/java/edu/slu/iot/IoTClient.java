@@ -1,7 +1,9 @@
 package edu.slu.iot;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.Executor;
@@ -18,15 +20,20 @@ import com.amazonaws.services.iot.client.sample.sampleUtil.SampleUtil.KeyStorePa
 
 public class IoTClient {
 	
+	private final int parallelism = 2;
 
-	public AWSIotMqttClient awsIotClient;
+	public List<AWSIotMqttClient> clientList = new ArrayList<AWSIotMqttClient>(parallelism);
 	private String targetThingName;
 	private String actualThingName;
 	private Executor executor = Executors.newCachedThreadPool();
 	
+	
+	
 	public IoTClient(String filename) throws AWSIotException {
-        initClient(filename);
-        awsIotClient.connect();
+		for (int i = 0; i < parallelism; i++) {
+			AWSIotMqttClient client = initClient(filename, i);
+			client.connect();
+		}
 	}
 	
 	public void publish(AWSIotMessage message) throws AWSIotException {
@@ -61,7 +68,7 @@ public class IoTClient {
 		return actualThingName;
 	}
 	
-    public void initClient(String filename) {
+    public AWSIotMqttClient initClient(String filename, int number) {
     	
     	File config = new File(filename);
     	Map<String, String> configMap = new HashMap<String, String>();
@@ -85,7 +92,7 @@ public class IoTClient {
 		}
     	
         String clientEndpoint = configMap.get("clientEndpoint");
-        String clientId = configMap.get("clientId");
+        String clientId = configMap.get("clientId" + number);
         String certificateFile = configMap.get("certificateFile");
         String privateKeyFile = configMap.get("privateKeyFile");
         targetThingName = configMap.get("targetThingName");
@@ -93,7 +100,7 @@ public class IoTClient {
                 
         if (clientEndpoint != null && clientId != null && certificateFile != null && privateKeyFile != null) {
         	KeyStorePasswordPair pair = SampleUtil.getKeyStorePasswordPair(certificateFile, privateKeyFile);
-            awsIotClient = new AWSIotMqttClient(clientEndpoint, clientId, pair.keyStore, pair.keyPassword);
+            return new AWSIotMqttClient(clientEndpoint, clientId, pair.keyStore, pair.keyPassword);
         } else {
         	throw new IllegalArgumentException("Failed to construct client due to missing arguments");
         }
