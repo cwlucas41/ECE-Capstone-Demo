@@ -25,6 +25,9 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import edu.slu.iot.IoTClient;
 import edu.slu.iot.data.DaqState;
@@ -73,8 +76,7 @@ public class StrandWindow {
 	private File configFile = null;
 	private File writeFile = null;
 	private IoTClient iotClient;
-	private JList listView;
-	private AppendableView listModel = new AppendableView();
+	private ArrayList<Sample> listModel;
 	private boolean iotConnected = false;
 	private String currentFilePath;
 
@@ -87,13 +89,16 @@ public class StrandWindow {
 	private JButton updateStateButton;
 	private JButton allPastDataButton;
 	private JButton rangePastDataButton;
-	private JCheckBox scrollingCheckBox;
 	private JTextPane connectionStatus;
 	private JTextPane topicStatus;
 	private JTextPane gainStatus;
 	private JTextPane frequencyStatus;
+	private JTextPane totalSampleStatus;
 
 	static private AmazonDynamoDB dynamoDB;
+	
+	private ScheduledExecutorService executor;
+	private Runnable updateSampleTotalRunnable;
 
 	/**
 	 * Launch the application.
@@ -123,7 +128,10 @@ public class StrandWindow {
 	 * Create the application.
 	 */
 	public StrandWindow() {
-		initialize(); 
+		initialize();
+		listModel = new ArrayList<Sample>();
+		executor = Executors.newSingleThreadScheduledExecutor();
+		updateSampleTotalRunnable = new SampleTotalUpdater();
 	}
 
 	/**
@@ -131,9 +139,9 @@ public class StrandWindow {
 	 */
 	private void initialize() {
 		frame = new JFrame();
-		frame.setBounds(100, 100, 600, 425);
+		frame.setBounds(100, 100, 600, 350);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.getContentPane().setLayout(new MigLayout("", "[132.00px,grow][48.00px][114.00:104.00][74.00,grow]", "[25.00px,center][][8.00px,grow,center][][grow,center][grow,center][grow,center][][19.00][center][grow,center][][1.00][27.00,grow,center][][grow]"));
+		frame.getContentPane().setLayout(new MigLayout("", "[132.00px,grow][48.00px][114.00:104.00][74.00,grow]", "[25.00px,center][][8.00px,center][][center][center][center][19.00][center][center][][1.00][27.00,grow,center]"));
 
 		JTextPane txtpnChooseAConfiguration = new JTextPane();
 		txtpnChooseAConfiguration.setEditable(false);
@@ -219,13 +227,13 @@ public class StrandWindow {
 
 
 		JSeparator thirdSeparator = new JSeparator();
-		frame.getContentPane().add(thirdSeparator, "cell 0 8 4 1,growx,aligny center");
+		frame.getContentPane().add(thirdSeparator, "cell 0 7 4 1,growx,aligny center");
 
 		JTextPane pastDataTextBox = new JTextPane();
 		pastDataTextBox.setEditable(false);
 		pastDataTextBox.setBackground(SystemColor.menu);
 		pastDataTextBox.setText("Start time:");
-		frame.getContentPane().add(pastDataTextBox, "cell 0 9,alignx left,aligny center");
+		frame.getContentPane().add(pastDataTextBox, "cell 0 8,alignx left,aligny center");
 
 		JButton btnBrowse = new JButton("Browse...");
 		btnBrowse.addMouseListener(new MouseAdapter() {
@@ -261,10 +269,10 @@ public class StrandWindow {
 		timeSettings1.generatePotentialMenuTimes(TimeIncrement.FiveMinutes, null, null);
 		DatePickerSettings dateSettings1 = new DatePickerSettings();
 		DateTimePicker startDateTimePicker = new DateTimePicker(dateSettings1, timeSettings1);
-		frame.getContentPane().add(startDateTimePicker, "cell 1 9 2 1,alignx left,aligny center");
+		frame.getContentPane().add(startDateTimePicker, "cell 1 8 2 1,alignx left,aligny center");
 
 		allPastDataButton = new JButton("Show all past data");
-		frame.getContentPane().add(allPastDataButton, "cell 3 9,growx,aligny center");
+		frame.getContentPane().add(allPastDataButton, "cell 3 8,growx,aligny center");
 		allPastDataButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {				
 				loadHistoricalData();
@@ -276,14 +284,14 @@ public class StrandWindow {
 		txtpnEndTime.setEditable(false);
 		txtpnEndTime.setBackground(SystemColor.menu);
 		txtpnEndTime.setText("End time:");
-		frame.getContentPane().add(txtpnEndTime, "cell 0 10,growx,aligny center");
+		frame.getContentPane().add(txtpnEndTime, "cell 0 9,growx,aligny center");
 
 		TimePickerSettings timeSettings2 = new TimePickerSettings();
 		timeSettings2.setInitialTimeToNow();
 		timeSettings2.generatePotentialMenuTimes(TimeIncrement.FiveMinutes, null, null);
 		DatePickerSettings dateSettings2 = new DatePickerSettings();
 		DateTimePicker stopDateTimePicker = new DateTimePicker(dateSettings2, timeSettings2);
-		frame.getContentPane().add(stopDateTimePicker, "cell 1 10 2 1,alignx left,aligny center");
+		frame.getContentPane().add(stopDateTimePicker, "cell 1 9 2 1,alignx left,aligny center");
 
 		rangePastDataButton = new JButton("Show range of past data");
 		rangePastDataButton.setEnabled(false);
@@ -298,16 +306,16 @@ public class StrandWindow {
 				}
 			}
 		});
-		frame.getContentPane().add(rangePastDataButton, "cell 3 10,growx,aligny center");
+		frame.getContentPane().add(rangePastDataButton, "cell 3 9,growx,aligny center");
 
 		JSeparator fourthSeparator = new JSeparator();
-		frame.getContentPane().add(fourthSeparator, "cell 0 11 4 1,growx,aligny center");
+		frame.getContentPane().add(fourthSeparator, "cell 0 10 4 1,growx,aligny center");
 
 		JTextPane txtpnChooseAFile = new JTextPane();
 		txtpnChooseAFile.setEditable(false);
 		txtpnChooseAFile.setText("Choose or create a file to write to");
 		txtpnChooseAFile.setBackground(SystemColor.menu);
-		frame.getContentPane().add(txtpnChooseAFile, "cell 0 13,growx,aligny center");
+		frame.getContentPane().add(txtpnChooseAFile, "cell 0 12,growx,aligny center");
 		JButton writeButton = new JButton("Write to file");
 		writeButton.addMouseListener(new MouseAdapter() {
 			@Override
@@ -319,7 +327,7 @@ public class StrandWindow {
 			}
 		});
 		writeButton.setEnabled(false);
-		frame.getContentPane().add(writeButton, "cell 2 13,growx,aligny center");
+		frame.getContentPane().add(writeButton, "cell 2 12,growx,aligny center");
 
 		JButton writePathButton = new JButton("Find file...");
 		writePathButton.addMouseListener(new MouseAdapter() {
@@ -336,17 +344,13 @@ public class StrandWindow {
 				}
 			}
 		});
-		frame.getContentPane().add(writePathButton, "cell 1 13,growx,aligny center");
-
-		scrollingCheckBox = new JCheckBox("Scroll to Bottom"); //TODO: weird bug with this button?
-		frame.getContentPane().add(scrollingCheckBox, "cell 3 13,growx,aligny center");
-		scrollingCheckBox.setSelected(true);
-
-		JScrollPane scrollPane = new JScrollPane();
-		frame.getContentPane().add(scrollPane, "cell 0 15 4 1,grow");
-
-		listView = new JList(listModel);
-		scrollPane.setViewportView(listView);	
+		frame.getContentPane().add(writePathButton, "cell 1 12,growx,aligny center");
+		
+		totalSampleStatus = new JTextPane();
+		totalSampleStatus.setBackground(SystemColor.menu);
+		totalSampleStatus.setText("Samples retrieved from current session: ");
+		totalSampleStatus.setEditable(false);
+		frame.getContentPane().add(totalSampleStatus, "cell 3 12,alignx center,aligny center");
 	}
 
 	public void pythonGraphing() {
@@ -378,14 +382,13 @@ public class StrandWindow {
 			Sample sample = null;
 			bwriter.write("time,voltage");
 			bwriter.newLine();
-			long firstSeconds = listModel.getElementAt(0).getTimestamp() >> 32;
-			for (int i = 0; i < listModel.getSize(); i++) {
-				sample = listModel.getElementAt(i);
+			long firstSeconds = listModel.get(0).getTimestamp() >> 32;
+			for (int i = 0; i < listModel.size(); i++) {
+				sample = listModel.get(i);
 				long timeStamp = sample.getTimestamp();
 				long seconds = timeStamp >> 32;
 				long nanoSeconds = timeStamp << 32;
 				nanoSeconds = nanoSeconds >> 32;
-				System.out.println(Long.toBinaryString(nanoSeconds));
 				long deltaSeconds = seconds - firstSeconds;
 				int nanoDigits = ((int) Math.log10(nanoSeconds)) + 1; // need to add leading zeroes to nanosecond value
 				int leadingZeroes = 9 - nanoDigits;
@@ -408,14 +411,14 @@ public class StrandWindow {
 	}
 
 	public void loadHistoricalData(long startTime, long endTime) {
-		listModel.clearList();
+		listModel.clear();
 		QuerySpec spec;
 		if (topicString == null) {
 			System.out.println("Please enter your session ID.");
 		}
 		else {
-			if (listModel.getSize() != 0) { //if we have any data from this session so far, only query data from before it began
-				endTime = listModel.getElementAt(0).getTimestamp();
+			if (listModel.size() != 0) { //if we have any data from this session so far, only query data from before it began
+				endTime = listModel.get(0).getTimestamp();
 			}
 			spec = new QuerySpec()
 					.withRangeKeyCondition(new RangeKeyCondition("timestamp").between(startTime, endTime))
@@ -433,7 +436,7 @@ public class StrandWindow {
 				item = iterator.next();
 				writeToView.add(new Sample(item));
 			}
-			listModel.addBulkToList(writeToView);
+			listModel.addAll(writeToView);
 		}
 	}
 
@@ -460,7 +463,6 @@ public class StrandWindow {
 		else {
 			try {
 				iotClient = new IoTClient(configFile.getPath());
-				listModel.clearList();
 				stateSourceObject = new StateSource<DaqState>(iotClient, iotClient.getTargetThingName(), DaqState.class).getState();
 				StateListener sinkListener = new StateListener() {
 					@Override
@@ -476,7 +478,7 @@ public class StrandWindow {
 									}
 									sListener = new StrandListener(retrievedTopic, AWSIotQos.QOS0, StrandWindow.this);
 									iotClient.subscribe(sListener);
-									listModel.clearList();
+									listModel.clear();
 									topicString = retrievedTopic;
 								} catch (AWSIotException | AWSIotTimeoutException e) {
 									e.printStackTrace(); //TODO: fix all of these catch blocks to do something sensible
@@ -492,6 +494,7 @@ public class StrandWindow {
 				connectionStatus.setText("Status: Connected");
 				connectButton.setText("Stop");
 				updateStateButton.setEnabled(true);
+				executor.scheduleAtFixedRate(updateSampleTotalRunnable, 0, 1, TimeUnit.SECONDS);
 			} catch (AWSIotException e) {
 				e.printStackTrace();
 			}
@@ -525,24 +528,16 @@ public class StrandWindow {
 	}
 
 	public void writeLineToList(Sample sampleToWrite) {
-
-		List<Sample> storedList = listModel.getList(); //so we can have a more direct reference
-		if ((storedList.size() > 0) && ( sampleToWrite.compareTo(storedList.get(storedList.size()-1)) ) < 0) {
-			for (int i = 2; i < storedList.size(); i++) {
-				if (sampleToWrite.compareTo(storedList.get(storedList.size()-i)) >= 0) {
-					listModel.insertIntoList((storedList.size() - i + 1), sampleToWrite);
+		if ((listModel.size() > 0) && ( sampleToWrite.compareTo(listModel.get(listModel.size()-1)) ) < 0) {
+			for (int i = 2; i < listModel.size(); i++) {
+				if (sampleToWrite.compareTo(listModel.get(listModel.size()-i)) >= 0) {
+					listModel.add((listModel.size() - i + 1), sampleToWrite);
 					break;
 				}
 			}
 		}
 		else {
-			listModel.appendToList(sampleToWrite);
-		}
-		if (scrollingCheckBox.isSelected()) {
-			int lastIndex = listModel.getSize() - 1;
-			if (lastIndex > 0) {
-				listView.ensureIndexIsVisible(lastIndex);
-			}
+			listModel.add(sampleToWrite);
 		}
 	}
 
@@ -565,52 +560,13 @@ public class StrandWindow {
 		}
 		return tableName;
 	}
+	
+	private class SampleTotalUpdater implements Runnable {
 
-	public class AppendableView extends AbstractListModel<Sample> {
-		private List<Sample> model;
-
-		public AppendableView() {
-			model = new ArrayList<Sample>();
-		}
-
-		public int getSize() {
-			return model.size();
-		}
-		public Sample getElementAt(int index) {
-			return model.get(index);
-		}
-		public void appendToList(Sample value) {
-			model.add(value);
-			fireIntervalAdded(this, this.getSize() - 1, this.getSize() - 1);
-		}
-		public void insertIntoList(int index, Sample value) {
-			model.add(index, value);
-			fireIntervalAdded(this, index, this.getSize() - 1);
-		}
-		public void addBulkToList(List<Sample> listOfValues) {
-			model.addAll(listOfValues);
-			Collections.sort(model);
-			if (this.getSize() > 0)
-				fireIntervalAdded(this, 0, this.getSize() - 1);
-			if (scrollingCheckBox.isSelected()) {
-				int lastIndex = this.getSize() - 1;
-				if (lastIndex > 0) {
-					listView.ensureIndexIsVisible(lastIndex);
-				}
-			}
-		}
-		public List<Sample> getList() {
-			return model;
-		}
-		public void clearList() {
-			int size = this.getSize();
-			if (size > 0) {
-				model.clear();
-				fireIntervalRemoved(this, 0, size - 1);
-			}
+		@Override
+		public void run() {
+			totalSampleStatus.setText("Samples retrieved from current session: " + listModel.size());
 		}
 	}
-
-
 
 }
