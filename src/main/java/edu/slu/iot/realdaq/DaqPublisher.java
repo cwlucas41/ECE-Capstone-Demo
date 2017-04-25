@@ -61,28 +61,18 @@ public class DaqPublisher extends Publisher {
 
 	private class NonBlockingPublishListener extends AWSIotMessage {
 
-		Sample sample;
-
 		public NonBlockingPublishListener(String topic, AWSIotQos qos, String payload) {
 			super(topic, qos, payload);
-			sample = GsonSerializer.deserialize(getStringPayload(), Sample.class);
-		}
-
-		@Override
-		public void onSuccess() {
-			//System.out.println("daq: >>> " + sample.serialize());
 		}
 
 		@Override
 		public void onFailure() {
 			System.out.println(this.errorCode + " " + this.errorMessage);
-			System.out.println(System.currentTimeMillis() + ": publish failed for " + sample.serialize());
-
 		}
 
 		@Override
 		public void onTimeout() {
-			System.out.println(System.currentTimeMillis() + ": publish timeout for " + sample.serialize());
+			System.out.println(this.errorCode + " " + this.errorMessage);
 		}
 
 	}
