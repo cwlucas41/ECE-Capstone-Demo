@@ -1,7 +1,5 @@
 package edu.slu.iot.client;
 
-import static org.junit.Assert.assertEquals;
-
 import java.awt.EventQueue;
 
 import javax.swing.JFrame;
