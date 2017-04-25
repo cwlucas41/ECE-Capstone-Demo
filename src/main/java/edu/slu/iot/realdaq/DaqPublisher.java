@@ -27,6 +27,8 @@ public class DaqPublisher extends Publisher {
 	public void run() {	
 
 		System.out.println("publisher running");
+		
+		int i = 0;
 
 		while (s.hasNextLine()) {
 			// get line
@@ -47,7 +49,9 @@ public class DaqPublisher extends Publisher {
 			Sample sample = new Sample(deviceID, topic, timeStamp, value );
 			AWSIotMessage message = new NonBlockingPublishListener(topic, qos, sample.serialize());
 			publish(message);
+			i++;
 		}
+		System.out.println("Published: " + i);
 	}
 
 	private class NonBlockingPublishListener extends AWSIotMessage {
