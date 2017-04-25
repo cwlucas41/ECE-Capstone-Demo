@@ -1,7 +1,7 @@
 package edu.slu.iot.realdaq;
 import java.io.IOException;
 import java.lang.ProcessBuilder;
-
+import java.util.Scanner;
 import com.amazonaws.services.iot.client.AWSIotException;
 import com.amazonaws.services.iot.client.AWSIotQos;
 import com.amazonaws.services.iot.client.AWSIotTimeoutException;
@@ -57,26 +57,33 @@ public class PublishSample {
 						}
 
 					}
+          
+					double actualGain = targetState.getGain();
+					double actualFreq = targetState.getFrequency();
+          
 
 					try{
 						//adjust variable resistors 
-						System.out.println("Changing Digital pots");
+						//System.out.println("Changing Digital pots");
 						i2cControllerProcess = new ProcessBuilder(i2cController,freqToken ,targetState.getFrequency().toString()).start();
-						i2cControllerProcess.waitFor();
-						
-						System.out.println("Freq set. Updating Gain");
+            i2cControllerProcess.waitFor();
+						//System.out.println("Freq set. Updating Gain");
 						i2cControllerProcess = new ProcessBuilder(i2cController,gainToken ,targetState.getGain().toString()).start();
-						i2cControllerProcess.waitFor();
-						
-						System.out.println("Gain set. ");
-						System.out.println("Dpot update complete");
+						Scanner in = new Scanner(i2cControllerProcess.getInputStream());
+            while(in.hasNextLine()){
+              actualGain= Float.parseFloat(in.nextLine());
+            }
+            System.out.println("actualGain is " + actualGain);
+            i2cControllerProcess.waitFor();
+					  in.close();	
+						//System.out.println("Gain set. ");
+						//System.out.println("Dpot update complete");
 					}catch(IOException | InterruptedException e ){
 						e.printStackTrace();
 					}
 					
-					// TODO: set these with feedback from python code
-					double actualGain = targetState.getGain();
-					double actualFreq = targetState.getFrequency();
+					
+          
 
 					actualState.update(targetState.getTopic(), actualFreq, actualGain);
 					

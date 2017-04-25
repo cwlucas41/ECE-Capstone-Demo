@@ -33,10 +33,12 @@ r3 = 0xf8
 def setGain(desiredGain):
   valueR1 = 0
   valueR2 = 0
+  finalGain = 0.0
   for gain in gains:
     if desiredGain >= gain.gain:
       valueR1 = gain.r1_i2c_hex
       valueR2 = gain.r2_i2c_hex
+      finalGain = gain.gain
     else:
       break
   
@@ -44,16 +46,20 @@ def setGain(desiredGain):
   i2c_command_r2 = "i2cset -y 1 {} {} {}".format(hex(address),hex(r2),hex(valueR2))
   subprocess.call(i2c_command_r1.split())
   subprocess.call(i2c_command_r2.split())
+  print finalGain
 
 def setFreq(desiredFreq):
+  finalFreq = 0.0
   for freq in freqs:
     if desiredFreq <= freq.freq:
       valueR3 = freq.r3_i2c_hex
+      finalFreq = freq.freq
     else:
       break
   
   i2c_command = "i2cset -y 1 {} {} {}".format(hex(address),hex(r3),hex(valueR3))
   subprocess.call(i2c_command.split())
+  print finalFreq
 
 def printUsage():
   print "Usage: python adjustableResistors.py [flag] [value]"
