@@ -39,5 +39,13 @@ public class StrandListener extends AWSIotTopic {
     	Batch batch = GsonSerializer.deserialize(message.getStringPayload(), Batch.class);
         //System.out.println(System.currentTimeMillis() + ": <<< " + samples.serialize());
         sw.writeLineToList(batch.getSampleList());
+//    	byte[] utf8Bytes;
+//		try {
+//			utf8Bytes = message.getStringPayload().getBytes("UTF-8");
+//	    	System.out.println(utf8Bytes.length / batch.getSampleList().size());
+//		} catch (UnsupportedEncodingException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
     }
 }
