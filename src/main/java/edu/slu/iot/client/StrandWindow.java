@@ -28,7 +28,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import edu.slu.iot.IoTClient;
+import edu.slu.iot.data.Batch;
 import edu.slu.iot.data.DaqState;
+import edu.slu.iot.data.GsonSerializer;
 import edu.slu.iot.data.Sample;
 import edu.slu.iot.data.State;
 import edu.slu.iot.data.StateListener;
@@ -413,7 +415,7 @@ public class StrandWindow {
 				endTime = listModel.get(0).getTimestamp();
 			}
 			spec = new QuerySpec()
-					.withRangeKeyCondition(new RangeKeyCondition("timestamp").between(startTime, endTime))
+					.withRangeKeyCondition(new RangeKeyCondition("timeStamp").between(startTime, endTime))
 					.withHashKey("sessionID", topicString);
 			dynamoDB = AmazonDynamoDBClientBuilder.standard()
 					.withRegion(Regions.US_WEST_2)
@@ -423,12 +425,12 @@ public class StrandWindow {
 			ItemCollection<QueryOutcome> items = table.query(spec);
 			Iterator<Item> iterator = items.iterator();
 			Item item = null;
-			List<Sample> writeToView = new ArrayList<Sample>();
 			while (iterator.hasNext()) { //make sure this doesn't interrupt rendering too much
 				item = iterator.next();
-				writeToView.add(new Sample(item));
+				String payload = item.get("batch").toString();
+				Batch newBatch = GsonSerializer.deserialize(payload, Batch.class);
+				listModel.addAll(newBatch.getSampleList());
 			}
-			listModel.addAll(writeToView);
 			Collections.sort(listModel);
 		}
 	}
