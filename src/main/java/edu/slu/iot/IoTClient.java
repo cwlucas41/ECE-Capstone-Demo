@@ -39,11 +39,7 @@ public class IoTClient {
 	}
 	
 	public void subscribe(AWSIotTopic topic) throws AWSIotException {
-	    awsIotClient.subscribe(topic, true);
-	}
-	
-	public void unsubscribe(String topic, int timeout) throws AWSIotException, AWSIotTimeoutException {
-		awsIotClient.unsubscribe(topic, timeout);
+	    awsIotClient.subscribe(topic, 1000);
 	}
 	
 	public void disconnect() throws AWSIotException {
@@ -54,8 +50,8 @@ public class IoTClient {
 		awsIotClient.attach(device);
 	}
 	
-	public void unsubscribe(AWSIotTopic topic, int timeout) throws AWSIotException, AWSIotTimeoutException {
-	    awsIotClient.unsubscribe(topic, timeout);
+	public void unsubscribe(AWSIotTopic topic) throws AWSIotException, AWSIotTimeoutException {
+	    awsIotClient.unsubscribe(topic);
 	}
 	
 	public String getTargetThingName() {
