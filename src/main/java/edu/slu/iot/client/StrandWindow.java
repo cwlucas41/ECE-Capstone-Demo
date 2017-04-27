@@ -374,12 +374,12 @@ public class StrandWindow {
 		}
 		BufferedWriter bwriter = new BufferedWriter(new OutputStreamWriter(fstream));
 		try {
+			bwriter.write("time,voltage");
+			bwriter.newLine();
 			long firstSeconds = batchList.get(0).getSampleList().get(0).getTimestamp() >> 32;
 			for (int k = 0; k < batchList.size(); k++) {
 				List<Sample> listModel = batchList.get(k).getSampleList();
 				Sample sample = null;
-				bwriter.write("time,voltage");
-				bwriter.newLine();
 				for (int i = 0; i < listModel.size(); i++) {
 					sample = listModel.get(i);
 					long timeStamp = sample.getTimestamp();
