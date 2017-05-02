@@ -2,6 +2,6 @@ tableName Batch
 actualThingName real-daq-actual
 targetThingName real-daq-target
 clientEndpoint a3jty4ymt2tb55.iot.us-west-2.amazonaws.com
-clientId anything
-certificateFile Certificate1/d3d71b3c92-certificate.pem.crt
-privateKeyFile Certificate1/d3d71b3c92-private.pem.key
+clientId test2
+certificateFile Certificate2/53f3fb5604-certificate.pem.crt
+privateKeyFile Certificate2/53f3fb5604-private.pem.key
