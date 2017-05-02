@@ -71,7 +71,7 @@ public class StrandWindow {
 	private File configFile = null;
 	private File writeFile = null;
 	private IoTClient iotClient;
-	private ArrayList<Sample> listModel;
+	private ArrayList<Batch> batchList;
 	private boolean iotConnected = false;
 	private String currentFilePath;
 
@@ -124,7 +124,7 @@ public class StrandWindow {
 	 */
 	public StrandWindow() {
 		initialize();
-		listModel = new ArrayList<Sample>();
+		batchList = new ArrayList<Batch>();
 		executor = Executors.newSingleThreadScheduledExecutor();
 		updateSampleTotalRunnable = new SampleTotalUpdater();
 	}
@@ -134,7 +134,7 @@ public class StrandWindow {
 	 */
 	private void initialize() {
 		frame = new JFrame();
-		frame.setBounds(100, 100, 600, 350);
+		frame.setBounds(100, 100, 700, 400);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.getContentPane().setLayout(new MigLayout("", "[132.00px,grow][48.00px][114.00:104.00][74.00,grow]", "[25.00px,center][][8.00px,center][][center][center][center][19.00][center][center][][1.00][27.00,grow,center]"));
 
@@ -374,25 +374,28 @@ public class StrandWindow {
 		}
 		BufferedWriter bwriter = new BufferedWriter(new OutputStreamWriter(fstream));
 		try {
-			Sample sample = null;
-			bwriter.write("time,voltage");
-			bwriter.newLine();
-			long firstSeconds = listModel.get(0).getTimestamp() >> 32;
-			for (int i = 0; i < listModel.size(); i++) {
-				sample = listModel.get(i);
-				long timeStamp = sample.getTimestamp();
-				long seconds = timeStamp >> 32;
-				long nanoSeconds = timeStamp << 32;
-				nanoSeconds = nanoSeconds >> 32;
-				long deltaSeconds = seconds - firstSeconds;
-				int nanoDigits = ((int) Math.log10(nanoSeconds)) + 1; // need to add leading zeroes to nanosecond value
-				int leadingZeroes = 9 - nanoDigits;
-				String zeroes = "";
-				for (int j = 0; j < leadingZeroes; j++) {
-					zeroes = zeroes + "0";
-				}
-				bwriter.write(Long.toString(deltaSeconds) + "." + zeroes + nanoSeconds + "," + Float.toString(sample.getValue()));
+			long firstSeconds = batchList.get(0).getSampleList().get(0).getTimestamp() >> 32;
+			for (int k = 0; k < batchList.size(); k++) {
+				List<Sample> listModel = batchList.get(k).getSampleList();
+				Sample sample = null;
+				bwriter.write("time,voltage");
 				bwriter.newLine();
+				for (int i = 0; i < listModel.size(); i++) {
+					sample = listModel.get(i);
+					long timeStamp = sample.getTimestamp();
+					long seconds = timeStamp >> 32;
+					long nanoSeconds = timeStamp << 32;
+					nanoSeconds = nanoSeconds >> 32;
+					long deltaSeconds = seconds - firstSeconds;
+					int nanoDigits = ((int) Math.log10(nanoSeconds)) + 1; // need to add leading zeroes to nanosecond value
+					int leadingZeroes = 9 - nanoDigits;
+					String zeroes = "";
+					for (int j = 0; j < leadingZeroes; j++) {
+						zeroes = zeroes + "0";
+					}
+					bwriter.write(Long.toString(deltaSeconds) + "." + zeroes + nanoSeconds + "," + Float.toString(sample.getValue()));
+					bwriter.newLine();
+				}
 			}
 			bwriter.close();
 		}
@@ -411,8 +414,8 @@ public class StrandWindow {
 			System.out.println("Please enter your session ID.");
 		}
 		else {
-			if (listModel.size() != 0) { //if we have any data from this session so far, only query data from before it began
-				endTime = listModel.get(0).getTimestamp();
+			if (batchList.size() != 0) { //if we have any data from this session so far, only query data from before it began
+				endTime = batchList.get(0).getSampleList().get(0).getTimestamp();
 			}
 			spec = new QuerySpec()
 					.withRangeKeyCondition(new RangeKeyCondition("timeStamp").between(startTime, endTime))
@@ -425,13 +428,12 @@ public class StrandWindow {
 			ItemCollection<QueryOutcome> items = table.query(spec);
 			Iterator<Item> iterator = items.iterator();
 			Item item = null;
-			while (iterator.hasNext()) { //make sure this doesn't interrupt rendering too much
+			while (iterator.hasNext()) {
 				item = iterator.next();
 				String payload = item.get("batch").toString();
 				Batch newBatch = GsonSerializer.deserialize(payload, Batch.class);
-				listModel.addAll(newBatch.getSampleList());
+				writeBatchToList(newBatch);
 			}
-			Collections.sort(listModel);
 		}
 	}
 
@@ -473,7 +475,7 @@ public class StrandWindow {
 									}
 									sListener = new StrandListener(retrievedTopic, AWSIotQos.QOS0, StrandWindow.this);
 									iotClient.subscribe(sListener);
-									listModel.clear();
+									batchList.clear();
 									topicString = retrievedTopic;
 								} catch (AWSIotException | AWSIotTimeoutException e) {
 									e.printStackTrace(); //TODO: fix all of these catch blocks to do something sensible
@@ -522,23 +524,37 @@ public class StrandWindow {
 		});
 	}
 
-	public void writeLineToList(Sample sampleToWrite) {
-		if ((listModel.size() > 0) && ( sampleToWrite.compareTo(listModel.get(listModel.size()-1)) ) < 0) {
-			for (int i = 2; i < listModel.size(); i++) {
-				if (sampleToWrite.compareTo(listModel.get(listModel.size()-i)) >= 0) {
-					listModel.add((listModel.size() - i + 1), sampleToWrite);
+//	public void writeLineToList(Sample sampleToWrite) {
+//		if ((listModel.size() > 0) && ( sampleToWrite.compareTo(listModel.get(listModel.size()-1)) ) < 0) {
+//			for (int i = 2; i < listModel.size(); i++) {
+//				if (sampleToWrite.compareTo(listModel.get(listModel.size()-i)) >= 0) {
+//					listModel.add((listModel.size() - i + 1), sampleToWrite);
+//					break;
+//				}
+//			}
+//		}
+//		else {
+//			listModel.add(sampleToWrite);
+//		}
+//	}
+//	
+//	public void writeLineToList(List<Sample> samplesToWrite) {
+//		for (int j = 0; j < samplesToWrite.size(); j++) {
+//			writeLineToList(samplesToWrite.get(j));
+//		}
+//	}
+	
+	public void writeBatchToList(Batch batchToWrite) {
+		if ((batchList.size() > 0) && ( batchToWrite.compareTo(batchList.get(batchList.size()-1)) < 0)) {
+			for (int i = 2; i < batchList.size(); i++) {
+				if (batchToWrite.compareTo(batchList.get(batchList.size()-i)) >= 0) {
+					batchList.add((batchList.size() - i + 1), batchToWrite);
 					break;
 				}
 			}
 		}
 		else {
-			listModel.add(sampleToWrite);
-		}
-	}
-	
-	public void writeLineToList(List<Sample> samplesToWrite) {
-		for (int j = 0; j < samplesToWrite.size(); j++) {
-			writeLineToList(samplesToWrite.get(j));
+			batchList.add(batchToWrite);
 		}
 	}
 
@@ -566,7 +582,7 @@ public class StrandWindow {
 
 		@Override
 		public void run() {
-			totalSampleStatus.setText("Samples retrieved from current session: " + listModel.size());
+			totalSampleStatus.setText("Batches retrieved from current session: " + batchList.size());
 		}
 	}
 
