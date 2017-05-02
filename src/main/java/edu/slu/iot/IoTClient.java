@@ -62,6 +62,7 @@ public class IoTClient {
 			clientList.add(client);
 		}
 		stateClient = initClient(configMap, parallelism);
+		stateClient.connect();
 	}
 
 	public void publish(AWSIotMessage message) throws AWSIotException {
@@ -75,6 +76,10 @@ public class IoTClient {
 
 	public void publish(Publisher publisher) throws InterruptedException {
 		executor.execute(publisher);
+	}
+	
+	public void statePublish(AWSIotMessage message) throws AWSIotException {
+		stateClient.publish(message);
 	}
 
 	public void subscribe(AWSIotTopic iotTopic) throws AWSIotException {
@@ -92,6 +97,7 @@ public class IoTClient {
 		for(AWSIotMqttClient client : clientList) {
 			client.disconnect();
 		}
+		stateClient.disconnect();
 	}
 
 	public void attach(AWSIotDevice device) throws AWSIotException {
@@ -119,7 +125,7 @@ public class IoTClient {
 	public AWSIotMqttClient initClient(Map<String, String> configMap, int number) {
 
 		String clientEndpoint = configMap.get("clientEndpoint");
-		String clientId = configMap.get("clientId") + number;
+		String clientId = configMap.get("clientId") + "-" + number;
 		String certificateFile = configMap.get("certificateFile");
 		String privateKeyFile = configMap.get("privateKeyFile");
 		
