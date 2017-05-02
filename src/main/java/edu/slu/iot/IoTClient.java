@@ -19,90 +19,116 @@ import com.amazonaws.services.iot.client.sample.sampleUtil.SampleUtil;
 import com.amazonaws.services.iot.client.sample.sampleUtil.SampleUtil.KeyStorePasswordPair;
 
 public class IoTClient {
-	
-	private final int parallelism = 2;
+
+	private final int parallelism = 3;
 
 	public List<AWSIotMqttClient> clientList = new ArrayList<AWSIotMqttClient>(parallelism);
+	public AWSIotMqttClient stateClient;
 	private String targetThingName;
 	private String actualThingName;
 	private Executor executor = Executors.newCachedThreadPool();
-	
-	
-	
+	private int i = 0;
+
+
 	public IoTClient(String filename) throws AWSIotException {
-		for (int i = 0; i < parallelism; i++) {
-			AWSIotMqttClient client = initClient(filename, i);
-			client.connect();
-		}
-	}
-	
-	public void publish(AWSIotMessage message) throws AWSIotException {
-		awsIotClient.publish(message);
-	}
-	
-	public void publish(Publisher publisher) throws InterruptedException {
-        executor.execute(publisher);
-   	}
-	
-	public void subscribe(AWSIotTopic topic) throws AWSIotException {
-	    awsIotClient.subscribe(topic, 1000);
-	}
-	
-	public void disconnect() throws AWSIotException {
-		awsIotClient.disconnect();
-	}
-	
-	public void attach(AWSIotDevice device) throws AWSIotException {
-		awsIotClient.attach(device);
-	}
-	
-	public void unsubscribe(AWSIotTopic topic) throws AWSIotException, AWSIotTimeoutException {
-	    awsIotClient.unsubscribe(topic);
-	}
-	
-	public String getTargetThingName() {
-		return targetThingName;
-	}
-	
-	public String getActualThingName() {
-		return actualThingName;
-	}
-	
-    public AWSIotMqttClient initClient(String filename, int number) {
-    	
-    	File config = new File(filename);
-    	Map<String, String> configMap = new HashMap<String, String>();
-    	
+
+		File config = new File(filename);
+		Map<String, String> configMap = new HashMap<String, String>();
+
 		try (
-			Scanner sc = new Scanner(config);
-    ) {
+				Scanner sc = new Scanner(config);
+		) {
 
-	    	while (sc.hasNextLine()) {
-	    		String line = sc.nextLine();
-	    		String[] fields = line.split("\\s+");
+			while (sc.hasNextLine()) {
+				String line = sc.nextLine();
+				String[] fields = line.split("\\s+");
 
-	    		if (fields.length != 2) {
-	    			throw new IllegalArgumentException("invalid format for config file");
-	    		}
-	    		
-	    		configMap.put(fields[0], fields[1]);
-	    	}	    	
+				if (fields.length != 2) {
+					throw new IllegalArgumentException("invalid format for config file");
+				}
+
+				configMap.put(fields[0], fields[1]);
+			}	    	
 		} catch (FileNotFoundException e) {
 			throw new IllegalArgumentException("bad filename for config file");
 		}
-    	
-        String clientEndpoint = configMap.get("clientEndpoint");
-        String clientId = configMap.get("clientId" + number);
-        String certificateFile = configMap.get("certificateFile");
-        String privateKeyFile = configMap.get("privateKeyFile");
-        targetThingName = configMap.get("targetThingName");
-        actualThingName = configMap.get("actualThingName");
-                
-        if (clientEndpoint != null && clientId != null && certificateFile != null && privateKeyFile != null) {
-        	KeyStorePasswordPair pair = SampleUtil.getKeyStorePasswordPair(certificateFile, privateKeyFile);
-            return new AWSIotMqttClient(clientEndpoint, clientId, pair.keyStore, pair.keyPassword);
-        } else {
-        	throw new IllegalArgumentException("Failed to construct client due to missing arguments");
-        }
-    }
+		
+		targetThingName = configMap.get("targetThingName");
+		actualThingName = configMap.get("actualThingName");
+
+		for (int i = 0; i < parallelism; i++) {
+			AWSIotMqttClient client = initClient(configMap, i);
+			client.connect();
+			clientList.add(client);
+		}
+		stateClient = initClient(configMap, parallelism);
+	}
+
+	public void publish(AWSIotMessage message) throws AWSIotException {
+		String topic = message.getTopic();
+		topic += "/" + i;
+		message.setTopic(topic);
+
+		clientList.get(i).publish(message);
+		i = (i + 1) % parallelism;
+	}
+
+	public void publish(Publisher publisher) throws InterruptedException {
+		executor.execute(publisher);
+	}
+
+	public void subscribe(AWSIotTopic iotTopic) throws AWSIotException {
+		int i = 0;
+		String topic = iotTopic.getTopic();
+		for(AWSIotMqttClient client : clientList) {
+			String newTopic = topic + "/" + i;
+			iotTopic.setTopic(newTopic);
+			client.subscribe(iotTopic, 1000);
+			i++;
+		}
+	}
+
+	public void disconnect() throws AWSIotException {
+		for(AWSIotMqttClient client : clientList) {
+			client.disconnect();
+		}
+	}
+
+	public void attach(AWSIotDevice device) throws AWSIotException {
+		stateClient.attach(device);
+	}
+
+	public void unsubscribe(AWSIotTopic iotTopic) throws AWSIotException, AWSIotTimeoutException {
+		int i = 0;
+		for(AWSIotMqttClient client : clientList) {
+			String topic = iotTopic.getTopic();
+			topic += "/" + i;
+			iotTopic.setTopic(topic);
+			client.unsubscribe(iotTopic);
+		}
+	}
+
+	public String getTargetThingName() {
+		return targetThingName;
+	}
+
+	public String getActualThingName() {
+		return actualThingName;
+	}
+
+	public AWSIotMqttClient initClient(Map<String, String> configMap, int number) {
+
+		String clientEndpoint = configMap.get("clientEndpoint");
+		String clientId = configMap.get("clientId") + number;
+		String certificateFile = configMap.get("certificateFile");
+		String privateKeyFile = configMap.get("privateKeyFile");
+		
+
+		if (clientEndpoint != null && clientId != null && certificateFile != null && privateKeyFile != null) {
+			KeyStorePasswordPair pair = SampleUtil.getKeyStorePasswordPair(certificateFile, privateKeyFile);
+			return new AWSIotMqttClient(clientEndpoint, clientId, pair.keyStore, pair.keyPassword);
+		} else {
+			throw new IllegalArgumentException("Failed to construct client due to missing arguments");
+		}
+	}
 }
