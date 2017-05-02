@@ -51,7 +51,7 @@ public class DaqPublisher extends Publisher {
 			Sample sample = new Sample(timeStamp, value);
 			batch.add(sample);
 			
-			if (batch.size() > 50) {
+			if (batch.size() > 1500) {
 				AWSIotMessage message = new NonBlockingPublishListener(topic, qos, batch.serialize());
 				publish(message);
 				batch = new Batch(targetState.getTopic(), targetState.getFrequency());
