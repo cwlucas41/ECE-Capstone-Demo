@@ -473,7 +473,7 @@ public class StrandWindow {
 									if (topicString != null) {
 										iotClient.unsubscribe(sListener);
 									}
-									sListener = new StrandListener(retrievedTopic, AWSIotQos.QOS0, StrandWindow.this);
+									sListener = new StrandListener(retrievedTopic, AWSIotQos.QOS1, StrandWindow.this);
 									iotClient.subscribe(sListener);
 									batchList.clear();
 									topicString = retrievedTopic;
