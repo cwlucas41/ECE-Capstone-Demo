@@ -20,7 +20,7 @@ import com.amazonaws.services.iot.client.sample.sampleUtil.SampleUtil.KeyStorePa
 
 public class IoTClient {
 
-	private final int parallelism = 5;
+	private final int parallelism = 10;
 
 	public List<AWSIotMqttClient> clientList = new ArrayList<AWSIotMqttClient>(parallelism);
 	public AWSIotMqttClient stateClient;
