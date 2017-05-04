@@ -18,6 +18,10 @@ public class Batch implements Comparable<Batch> {
 		this.t = topicName;
 	}
 	
+	public long getTimeStamp() {
+		return s;
+	}
+	
 	public void add(Sample sample) {
 		p.add(sample);
 		

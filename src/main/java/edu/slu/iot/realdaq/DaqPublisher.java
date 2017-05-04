@@ -53,7 +53,7 @@ public class DaqPublisher extends Publisher {
 			batch.add(sample);
 			
 			if (batch.size() > 1500) {
-				System.out.println("Sent batch number " + i + " with " + batch.size() + " samples");
+				System.out.println("Sent batch number " + i + " with start time of " + batch.getTimeStamp());
 				AWSIotMessage message = new NonBlockingPublishListener(topic, qos, batch.serialize());
 				publish(message);
 				batch = new Batch(targetState.getTopic(), targetState.getFrequency());
