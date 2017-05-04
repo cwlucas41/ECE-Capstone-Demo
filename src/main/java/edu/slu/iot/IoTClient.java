@@ -20,14 +20,14 @@ import com.amazonaws.services.iot.client.sample.sampleUtil.SampleUtil.KeyStorePa
 
 public class IoTClient {
 
-	private final int parallelism = 10;
+	private final int parallelism = 1;
 
 	public List<AWSIotMqttClient> clientList = new ArrayList<AWSIotMqttClient>(parallelism);
 	public AWSIotMqttClient stateClient;
 	private String targetThingName;
 	private String actualThingName;
 	private Executor executor = Executors.newCachedThreadPool();
-	private int i = 0;
+	private int channelCounter = 0;
 
 
 	public IoTClient(String filename) throws AWSIotException {
@@ -67,11 +67,11 @@ public class IoTClient {
 
 	public void publish(AWSIotMessage message) throws AWSIotException {
 		String topic = message.getTopic();
-		topic += "/" + i;
+		topic += "/" + channelCounter;
 		message.setTopic(topic);
 
-		clientList.get(i).publish(message);
-		i = (i + 1) % parallelism;
+		clientList.get(channelCounter).publish(message);
+		channelCounter = (channelCounter + 1) % parallelism;
 	}
 
 	public void publish(Publisher publisher) throws InterruptedException {
