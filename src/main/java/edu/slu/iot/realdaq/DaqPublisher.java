@@ -16,6 +16,7 @@ public class DaqPublisher extends Publisher {
 
 	private Scanner s;
 	private DaqState targetState;
+	private int i = 0;
 
 	public DaqPublisher(IoTClient client, AWSIotQos qos, Process p, DaqState targetState) {
 		super(client, targetState.getTopic(), qos);
@@ -52,6 +53,7 @@ public class DaqPublisher extends Publisher {
 			batch.add(sample);
 			
 			if (batch.size() > 1500) {
+				System.out.println("Sent batch number " + i + " with " + batch.size() + " samples");
 				AWSIotMessage message = new NonBlockingPublishListener(topic, qos, batch.serialize());
 				publish(message);
 				batch = new Batch(targetState.getTopic(), targetState.getFrequency());
