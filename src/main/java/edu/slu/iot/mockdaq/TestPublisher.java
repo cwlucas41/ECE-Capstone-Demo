@@ -22,7 +22,7 @@ public class TestPublisher extends Publisher {
 	@Override
     public void run() {
 		
-		Batch batch = new Batch(topic, 200);
+		Batch batch = new Batch(topic, 200, 1);
     	
         while (true) {
         	
@@ -41,7 +41,7 @@ public class TestPublisher extends Publisher {
 			if (batch.size() > 4) {
 				AWSIotMessage message = new NonBlockingPublishListener(topic, qos, batch.serialize());
 				publish(message);
-				batch = new Batch(topic, 200);
+				batch = new Batch(topic, 200, 1);
 			}
         }
     }
