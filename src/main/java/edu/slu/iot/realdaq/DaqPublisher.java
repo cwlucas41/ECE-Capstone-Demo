@@ -57,6 +57,7 @@ public class DaqPublisher extends Publisher {
 				AWSIotMessage message = new NonBlockingPublishListener(topic, qos, batch.serialize());
 				publish(message);
 				batch = new Batch(targetState.getTopic(), targetState.getFrequency());
+				i++;
 			}
 		}
 	}
