@@ -23,6 +23,14 @@ public class Sample implements Comparable<Sample> {
 		return v;
 	}
 
+	public void setTimestamp(long t) {
+		this.t= t;
+	}
+	
+	public void setValue(float v) {
+		this.v = v;
+	}
+
 	@Override
 	public int compareTo(Sample o) {
 		// sorts by increasing timestamp
