@@ -29,7 +29,7 @@ public class DaqPublisher extends Publisher {
 
 		System.out.println("publisher running");
 				
-		Batch batch = new Batch(targetState.getTopic(), targetState.getFrequency());
+		Batch batch = new Batch(targetState.getTopic(), targetState.getFrequency(), targetState.getGain());
 
 		while (s.hasNextLine()) {
 			// get line
@@ -38,10 +38,7 @@ public class DaqPublisher extends Publisher {
 			String[] fields = line.split(" ");
 
 			// parse line
-			float adcValue = (float) Integer.parseInt(fields[1]);
-			float readVolts = adcValue * 1.8f / 65536f;
-			float offsetFix = readVolts - .9f;
-			float value = (float) (offsetFix / targetState.getGain());
+			float value = (float) Integer.parseInt(fields[1]);
 			
 			String[] times = fields[0].split(":");
 			long s = Long.parseLong(times[0]);
@@ -56,7 +53,7 @@ public class DaqPublisher extends Publisher {
 				System.out.println("Sent batch number " + i + " with start time of " + batch.getTimeStamp());
 				AWSIotMessage message = new NonBlockingPublishListener(topic, qos, batch.serialize());
 				publish(message);
-				batch = new Batch(targetState.getTopic(), targetState.getFrequency());
+				batch = new Batch(targetState.getTopic(), targetState.getFrequency(), targetState.getGain());
 				i++;
 			}
 		}

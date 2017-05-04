@@ -10,7 +10,7 @@ public class BatchTest {
 
 	@Test
 	public void batchSortSet() {
-		Batch b = new Batch("", 0);
+		Batch b = new Batch("", 0, 0);
 		b.add(new Sample(5,5));
 		b.add(new Sample(6,6));
 		assertEquals(b.s, 5);
@@ -18,7 +18,7 @@ public class BatchTest {
 	
 	@Test
 	public void serializeTest() {
-		Batch b1 = new Batch("", 0);
+		Batch b1 = new Batch("", 0, 0);
 		for (int i = 0; i < 100; i++) {
 			b1.add(new Sample(i, 0));
 		}
