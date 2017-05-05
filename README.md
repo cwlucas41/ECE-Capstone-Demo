@@ -2,8 +2,6 @@
 
 This is the working baseline for our Senior Design Project, webDAQ.
 
-## Reminders
+## Note
 
-* In order run the tests in this package, you need to copy the arguments.txt file into Run->Run Configurations->Arguments in Eclipse.
-* This project depends on Maven for its dependencies.
-* Do not share certificates included in this **private** project.
+The certificate files included in this repo are disabled, and are included for example use only.
