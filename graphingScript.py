@@ -15,4 +15,4 @@ layout = go.Layout(title='Retrieved DAQ data', plot_bgcolor='rgb(230, 230, 230)'
 
 fig = go.Figure(data=[trace], layout=layout)
 
-plotly.offline.plot(fig, filename='data_plot.html')
+plotly.offline.plot(fig, filename='data-plot.html')
