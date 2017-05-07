@@ -40,7 +40,7 @@ public class DaqStateSourceSinkIntegrationTest {
 	
 	@Test
 	public void initializesWithNoDesiredState() throws AWSIotException, InterruptedException {
-		client1.publish(new AWSIotMessage(shadowTopicPrefix + "/delete", AWSIotQos.QOS1, ""));
+		client1.statePublish(new AWSIotMessage(shadowTopicPrefix + "/delete", AWSIotQos.QOS1, ""));
 		
 		// wait for delete to propogate
 		Thread.sleep(2000);
@@ -73,7 +73,7 @@ public class DaqStateSourceSinkIntegrationTest {
 	
 	@Test
 	public void initializesWithDesiredState() throws AWSIotException, InterruptedException {
-		client1.publish(new AWSIotMessage(shadowTopicPrefix + "/delete", AWSIotQos.QOS1, ""));
+		client1.statePublish(new AWSIotMessage(shadowTopicPrefix + "/delete", AWSIotQos.QOS1, ""));
 		
 		// wait for delete to propogate
 		Thread.sleep(2000);

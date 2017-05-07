@@ -12,10 +12,20 @@ public class Batch implements Comparable<Batch> {
 	private String t;
 	@SuppressWarnings("unused")
 	private double f;
+	private double g;
 	
-	public Batch(String topicName, double sampledFrequency) {
+	public Batch(String topicName, double sampledFrequency, double gain) {
 		this.f = sampledFrequency;
 		this.t = topicName;
+		this.g = gain;
+	}
+	
+	public double getGain() {
+		return g;
+	}
+	
+	public long getTimeStamp() {
+		return s;
 	}
 	
 	public void add(Sample sample) {

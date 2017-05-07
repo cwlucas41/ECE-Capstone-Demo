@@ -378,7 +378,8 @@ public class StrandWindow {
 			bwriter.newLine();
 			long firstSeconds = batchList.get(0).getSampleList().get(0).getTimestamp() >> 32;
 			for (int k = 0; k < batchList.size(); k++) {
-				List<Sample> listModel = batchList.get(k).getSampleList();
+				Batch batch = batchList.get(k);
+				List<Sample> listModel = batch.getSampleList();
 				Sample sample = null;
 				for (int i = 0; i < listModel.size(); i++) {
 					sample = listModel.get(i);
@@ -393,7 +394,12 @@ public class StrandWindow {
 					for (int j = 0; j < leadingZeroes; j++) {
 						zeroes = zeroes + "0";
 					}
-					bwriter.write(Long.toString(deltaSeconds) + "." + zeroes + nanoSeconds + "," + Float.toString(sample.getValue()));
+					
+					float readVolts = sample.getValue() * 1.8f / 65536f;
+					float offsetFix = readVolts - .9f;
+					float value = (float) (offsetFix / batch.getGain());
+					
+					bwriter.write(Long.toString(deltaSeconds) + "." + zeroes + nanoSeconds + "," + Float.toString(value));
 					bwriter.newLine();
 				}
 			}
@@ -473,7 +479,7 @@ public class StrandWindow {
 									if (topicString != null) {
 										iotClient.unsubscribe(sListener);
 									}
-									sListener = new StrandListener(retrievedTopic, AWSIotQos.QOS0, StrandWindow.this);
+									sListener = new StrandListener(retrievedTopic, AWSIotQos.QOS1, StrandWindow.this);
 									iotClient.subscribe(sListener);
 									batchList.clear();
 									topicString = retrievedTopic;
